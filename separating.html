@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drone Simulation</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            height: 100%;
+            width: 100%;
+        }
+        #gameCanvas {
+            display: block;
+        }
+        
+     #welcomeScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            z-index: 5000; /* Ensure it stays on top */
+            background: url('pics/MarsWelcome.jpg') no-repeat center center;
+            background-size: cover;
+        }
+
+        #welcomeScreen h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 5px #000;
+        }
+
+        #welcomeScreen p {
+            font-size: 20px;
+            margin-bottom: 40px;
+            text-shadow: 2px 2px 5px #000;
+        }
+
+        #startGameButton {
+            font-family: Arial, sans-serif;
+            padding: 15px 30px;
+            background-color: #d35400;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            text-transform: uppercase;
+            border-radius: 5px;
+            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.5);
+        }
+        
+       
+        
+        #info {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+            max-width: 600px;
+            position: absolute;
+            top: 50px;
+            left: 10px;
+            z-index: 1000;
+        }
+        
+         /* Hamburger menu styles */
+        .hamburger-menu {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 2000;
+        }
+
+        .hamburger-icon {
+            font-size: 30px;
+            cursor: pointer;
+            color: #333;
+        }
+
+        .dropdown-content {
+            position: absolute;
+            top: 40px;
+            right: 0;
+            background-color: #f9f9f9;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1000;
+            display: none;
+        }
+
+        .dropdown-content a {
+            color: black;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+        }
+
+        .dropdown-content a:hover {
+          background-color: #f1f1f1;}
+          
+          
+        #startButton, #startHoverThrustButton {
+            font-family: Arial, sans-serif;
+            padding: 10px 20px;
+            margin: 10px;
+            cursor: pointer;
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 1000;
+        }
+        
+        #stage2Button {
+         font-family: Arial, sans-serif;
+            padding: 10px 20px;
+            margin: 20px;
+            cursor: pointer;
+            position: absolute;
+            top: 30px;
+            left:0px;
+            z-index: 1000;
+        	
+        }
+        #inputContainer, #hoverThrustContainer {
+            visibility: hidden;  /* Start hidden */
+            position: absolute;
+            top: 300px;
+            left: 30px;
+            width: 600px;
+            z-index: 1000;
+            background-color: #f9f9f9;
+            padding: 10px;
+            border: 1px solid #ccc;
+        }
+        
+        #completionMessage {
+        	 visibility: hidden;  /* Start hidden */
+            position: absolute;
+            top: 300px;
+            left: 30px;
+            width: 300px;
+            z-index: 1000;
+            background-color: #f9f9f9;
+            padding: 10px;
+            border: 1px solid #ccc;
+        	
+        }
+        #inputCode {
+            font-family: Arial, sans-serif;
+            padding: 10px;
+            width: calc(100% - 160px);
+            margin-left: 120px;
+        }
+        #hoverThrustCode {
+            font-family: Arial, sans-serif;
+            padding: 10px;
+            width: calc(100% - 130px);
+            margin-left: 105px;
+        }
+        #submitCodeButton, #submitHoverThrustButton {
+            font-family: Arial, sans-serif;
+            padding: 10px 20px;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+        
+        #heightInputContainer {
+   			 	position: absolute;
+   				 top: 150px; /* Adjust the position as needed */
+  				 left: 20px; /* Adjust the position as needed */
+   				 z-index: 1000;
+  				 background-color: #f9f9f9;
+   				 padding: 10px;
+   				 border: 1px solid #ccc;
+			}
+
+			#hintButtonStage3 {
+   		 margin-top: 10px;
+			}
+        .label {
+            position: absolute;
+            top: 20px;
+            left: 10px;
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+        }
+        
+      #errorInputContainer {
+   		position: absolute;
+  		  top: 300px; /* Adjust as necessary */
+   		 left: 20px; /* Adjust as necessary */
+  		 z-index: 1000;
+   		 background-color: #f9f9f9;
+   		 padding: 10px;
+   		 border: 1px solid #ccc;
+}
+
+ 		#mountainStageContainer {
+            visibility: hidden;  /* Start hidden */
+            position: absolute;
+            top: 450px;
+            left: 40px;
+            width: 400px;
+            z-index: 1000;
+            background-color: #f9f9f9;
+            padding: 10px;
+            border: 1px solid #ccc;
+        }
+
+        #inputEquation {
+            font-family: Arial, sans-serif;
+            padding: 10px;
+            width: calc(100% - 160px);
+            margin-left: 120px;
+        }
+
+				#thrustInputContainer {
+    visibility: hidden;  /* Start hidden */
+    position: absolute;
+    top: 300px;
+    left: 30px;
+    width: 500px;
+    z-index: 1000;
+    background-color: #f9f9f9;
+    padding: 10px;
+    border: 1px solid #ccc;
+    display: flex;
+    align-items: center;
+}
+
+#thrustInputContainer .label {
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+    margin-right: 10px;
+    top: 40px;
+}
+
+#inputThrust {
+    font-family: Arial, sans-serif;
+    padding: 10px;
+    width: 60%; /* Adjusted width */
+    margin-right: 10px; /* Space between input and button */
+    margin-left: 60px;
+}
+
+#submitThrustButton {
+    font-family: Arial, sans-serif;
+    padding: 10px 20px;
+    cursor: pointer;
+}
+
+				
+        #nextStepButton {
+            font-family: Arial, sans-serif;
+            padding: 10px 20px;
+            margin-top: 10px;
+            cursor: pointer;
+            visibility: hidden; /* Initially hidden */
+        }
+        
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <button id="startButton">Start Mission</button>
+    <button id="startHoverThrustButton" style="visibility: hidden;">Start Hover Thrust</button>
+    <div id="info">Press 'Start Mission' to begin.</div>
+    
+    <div class="hamburger-menu">
+    <div class="hamburger-icon">&#9776;</div>
+    <div class="dropdown-content" style="display: none;">
+        <a href="#" id="stage1Link">Stage 1 - Free Fall</a>
+        <a href="#" id="stage2Link">Stage 2 - Hover Thrust</a>
+        <a href="#" id="stage3Link">Stage 3 - Altitude Control</a>
+        <a href="#" id="stage4Link">Stage 4 - Battery Life</a>
+        <a href="#" id="stage5Link">Stage 5 - Modeling Mountains</a>
+        <a href="#" id="stage6Link">Stage 6 - Landing</a>
+        <a href="#" id="stage7Link">Stage 7 - Tilt/Movement Control</a>
+        <a href="#" id="stage8Link">Stage 8 - Adjusting for Wind</a>
+        <a href="#" id="stage9Link">Stage 9 - Obstacle Avoidance</a>
+        <a href="#" id="stage10Link">Stage 10 - not sure yet</a>
+        <!-- Add more stages as needed -->
+    </div>
+	</div>
+
+ <!-- Welcome Screen -->
+    <div id="welcomeScreen">
+        <h1>Welcome to the Mars Drone Game!</h1>
+        <p>This is a game meant to teach basic physics, coding, and math behind control systems.</p>
+        <button id="startGameButton">Start Game</button>
+    </div>
+    <!-- Stage 1 Input -->
+    <div id="completionMessage" style="visibility: hidden;">Congratulations! You have completed Stage 1.</div>
+    <div id="completionMessage">
+        <p>Mission Complete!</p>
+        <button id="stage2Button" style="visibility: hidden;">Go to Stage 2</button>
+    </div>
+    <div id="inputContainer">
+        <span class="label">current_height =</span>
+        <input id="inputCode" type="text" placeholder="Enter position equation">
+        <button id="submitCodeButton">Submit Code</button>
+        <button id="hintButton" style="visibility: hidden;">Hint</button>
+    </div>
+
+    <!-- Stage 2 Input -->
+    <div id="hoverThrustContainer">
+        <span class="label">hover_thrust =</span>
+        <input id="hoverThrustCode" type="text" placeholder="Enter hover thrust equation">
+        <button id="submitHoverThrustButton">Submit Code</button>
+        <button id= 'hintButtonStage2' style= "visibility: hidden;">Hint</button>
+    </div>
+
+		<!-- Stage 3 Input -->
+		<div id="heightInputContainer" style="visibility: hidden;">
+    <div>
+        <span>Desired Height: </span>
+        <input id="inputHeight" type="text" placeholder="Enter desired height">
+        <button id="submitHeightButton">Submit</button>
+    </div>
+    <button id="hintButtonStage3" style="visibility: hidden;">Hint</button>
+		</div>
+
+		<div id="errorInputContainer" style="visibility: hidden;">
+    <span>Error = </span>
+    <input id="inputError" type="text" placeholder="Enter calculated error">
+    <button id="submitErrorButton">Submit</button>
+		</div>
+
+		<!-- Thrust Input for Stage 3 -->
+		<!-- Thrust Input for Initial Equation (Proportional) -->
+<div id="thrustInputContainer" style="visibility: hidden;">
+    <label for="inputThrust">Enter Thrust Equation (e.g., Kp * error + hover_thrust):</label>
+    <input id="inputThrust" type="text" placeholder="Enter thrust equation">
+    <button id="submitThrustButton">Submit Thrust Equation</button>
+</div>
+
+
+<!-- Derivative Input for Full Equation (Proportional-Derivative) -->
+<div id="derivativeInputContainer" style="visibility: hidden;">
+    <label for="inputDerivative">Enter Thrust Equation with Derivative (e.g., Kp * error + Kd * derivative(error) + hover_thrust):</label>
+    <input id="inputDerivative" type="text" placeholder="Enter your proportional-derivative thrust equation">
+    <button id="submitDerivativeButton">Submit Derivative Equation</button>
+</div>
+
+
+		
+		<!-- Stage 4 -->
+		<button id="startStage4Button">Start Stage 4</button>
+<input id="inputThrust" type="number" placeholder="Enter Thrust">
+<button id="submitPowerButton">Submit Thrust</button>
+<div id="batteryDisplay" style="width: 100%; height: 20px; background-color: green;"></div>
+
+
+		<!-- Stage 5 -->
+    <div id="mountainStageContainer" style="visibility: hidden;"></div>
+    
+    <!-- Stage 6 -->
+    <div id="landingStageContainer" style="visibility: hidden;"></div>
+    
+
+
+<!-- Input container for motor thrust controls -->
+<div id="inputContainer" style="visibility: hidden; position: absolute; top: 150px; left: 20px; padding: 10px; border: 1px solid #ccc; background-color: #f9f9f9;">
+    <label for="motor1Thrust">Motor 1 Thrust:</label>
+    <input id="motor1Thrust" type="range" min="0" max="20" value="10"><br><br>
+
+    <label for="motor2Thrust">Motor 2 Thrust:</label>
+    <input id="motor2Thrust" type="range" min="0" max="20" value="10"><br><br>
+
+    <button id="submitForcesButton">Apply Forces</button>
+</div>
+
+<!-- Next step button -->
+<button id="nextStepButton" style="visibility: hidden; position: absolute; top: 100px; left: 20px;">Next Step</button>
+
+
+    
+    <div id="errorMessage" style="visibility: hidden;"></div>
+    <script src="hamburgerMenu.js"></script>
+    <script src="Drone.js"></script>
+    <script src="Stage1.js"></script>
+    <script src="Stage2.js"></script>
+    <script src="Stage3.js"></script>
+    <script src="Stage4.js"></script>
+    <script src="Stage5.js"></script>
+    <script src="Stage6.js"></script>
+    <script src="Stage7.js"></script>
+    <script src="Game.js"></script>
+    <script>
+        // Handle Welcome Screen
+        document.getElementById('startGameButton').addEventListener('click', function() {
+            document.getElementById('welcomeScreen').style.display = 'none';
+            document.getElementById('gameCanvas').style.visibility = 'visible';
+            document.getElementById('info').style.visibility = 'visible';
+            document.querySelector('.hamburger-menu').style.visibility = 'visible';
+            document.getElementById('startButton').style.visibility = 'visible';
+        });
+    </script>
+</body>
+</html>
