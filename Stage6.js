@@ -10,8 +10,8 @@ class Stage6 {
         this.isHeightSet = false;
         this.droneImage = new Image();  // Image for the drone
         this.droneImage.src = 'pics/drone.png';  // Path to the drone image
- document.getElementById('startButton').style.visibility = 'hidden';
-  document.getElementById('info').style.visibility = 'hidden';
+        document.getElementById('startButton').style.visibility = 'hidden';
+        document.getElementById('info').style.visibility = 'hidden';
         this.initUI();
     }
 

@@ -78,36 +78,36 @@ class Stage1 {
         this.game.drawDrone();
     }
 
-   updatePosition(dt) {
-    try {
-        const previous_height = this.drone.y;
-        const velocity = this.drone.vy;
-        const time = dt;
+    updatePosition(dt) {
+        try {
+            const previous_height = this.drone.y;
+            const velocity = this.drone.vy;
+            const time = dt;
 
-        // Validate and execute user code
-        if (validateUserCode(this.positionUpdateCode)) {
-            const position = eval(this.positionUpdateCode.replace('previous_height', previous_height).replace('velocity', velocity).replace('time', time));
-            this.drone.y = position; // Use 'position' instead of 'height'
+            // Validate and execute user code
+            if (validateUserCode(this.positionUpdateCode)) {
+                const position = eval(this.positionUpdateCode.replace('previous_height', previous_height).replace('velocity', velocity).replace('time', time));
+                this.drone.y = position; // Use 'position' instead of 'height'
 
-            // Validate the updated position
-            if (this.drone.y >= getMountainHeightAt(this.drone.x, this.game)) { // Pass this.game as an argument
-   						 this.drone.y = getMountainHeightAt(this.drone.x, this.game);
-                this.drone.vx = 0;
-                this.drone.vy = 0;
-                this.drone.crashed = true;
-                document.getElementById('completionMessage').style.visibility = 'visible'; // Show completion message
-                document.getElementById('stage2Button').style.visibility = 'visible'; // Show Stage 2 button
-            } else if (this.drone.y < 0) {
-                throw new Error("Position is below ground level, check your equation.");
+                // Validate the updated position
+                if (this.drone.y >= getMountainHeightAt(this.drone.x, this.game)) { // Pass this.game as an argument
+                            this.drone.y = getMountainHeightAt(this.drone.x, this.game);
+                    this.drone.vx = 0;
+                    this.drone.vy = 0;
+                    this.drone.crashed = true;
+                    document.getElementById('completionMessage').style.visibility = 'visible'; // Show completion message
+                    document.getElementById('stage2Button').style.visibility = 'visible'; // Show Stage 2 button
+                } else if (this.drone.y < 0) {
+                    throw new Error("Position is below ground level, check your equation.");
+                }
+            } else {
+                throw new Error("Equation does not match reality. Please try again.");
             }
-        } else {
-            throw new Error("Equation does not match reality. Please try again.");
+        } catch (error) {
+            console.error('Error in user code:', error);
+            this.showError(error.message);
         }
-    } catch (error) {
-        console.error('Error in user code:', error);
-        this.showError(error.message);
     }
-}
 
 
     displayVelocityAndPosition() {

@@ -28,32 +28,32 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     document.getElementById('stage5Link').addEventListener('click', (e) => {
-    	 e.preventDefault();
+    	e.preventDefault();
     	game.startStage(Stage5);
-		});
+	});
 
-		document.getElementById('stage6Link').addEventListener('click', (e) => {
-    	 e.preventDefault();
+	document.getElementById('stage6Link').addEventListener('click', (e) => {
+    	e.preventDefault();
     	game.startStage(Stage6);
-		});
+	});
 		
-		document.getElementById('stage7Link').addEventListener('click', (e) => {
-    	 e.preventDefault();
+	document.getElementById('stage7Link').addEventListener('click', (e) => {
+    	e.preventDefault();
     	game.startStage(Stage7);
-		});
+	});
 		
-		document.getElementById('stage8Link').addEventListener('click', (e) => {
-    	 e.preventDefault();
+	document.getElementById('stage8Link').addEventListener('click', (e) => {
+    	e.preventDefault();
     	game.startStage(Stage8);
-		});
+	});
 		
-		document.getElementById('stage9Link').addEventListener('click', (e) => {
-    	 e.preventDefault();
+	document.getElementById('stage9Link').addEventListener('click', (e) => {
+    	e.preventDefault();
     	game.startStage(Stage9);
-		});
+	});
 		
-		document.getElementById('stage10Link').addEventListener('click', (e) => {
-    	 e.preventDefault();
+	document.getElementById('stage10Link').addEventListener('click', (e) => {
+    	e.preventDefault();
     	game.startStage(Stage10);
-		});
+	});
 });

@@ -26,29 +26,29 @@ class Game {
     }
 
     startStage(stageClass) {
-    if (this.currentStage && typeof this.currentStage.cleanup === 'function') {
-        this.currentStage.cleanup();
+        if (this.currentStage && typeof this.currentStage.cleanup === 'function') {
+            this.currentStage.cleanup();
+        }
+        this.currentStage = new stageClass(this); // Pass `this` as the `game` argument
+        this.currentStage.start();
     }
-    this.currentStage = new stageClass(this); // Pass `this` as the `game` argument
-    this.currentStage.start();
-}
 
 
     gameLoop(time) {
-    const dt = (time - this.lastTime) / 1000;
-    this.lastTime = time;
+        const dt = (time - this.lastTime) / 1000;
+        this.lastTime = time;
 
-    if (this.currentStage) {
-        if (typeof this.currentStage.update === 'function') {
-            this.currentStage.update(dt);
+        if (this.currentStage) {
+            if (typeof this.currentStage.update === 'function') {
+                this.currentStage.update(dt);
+            }
+            if (typeof this.currentStage.draw === 'function') {
+                this.currentStage.draw(this.ctx);
+            }
         }
-        if (typeof this.currentStage.draw === 'function') {
-            this.currentStage.draw(this.ctx);
-        }
+
+        requestAnimationFrame(this.gameLoop.bind(this));
     }
-
-    requestAnimationFrame(this.gameLoop.bind(this));
-}
 
 
     run() {

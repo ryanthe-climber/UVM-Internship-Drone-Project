@@ -70,10 +70,10 @@ class Stage2 {
     }
 
     validateUserCode(code) {
-    const pattern1 = /\s*mass\s*\*\s*gravity/;
-    const pattern2 = /\s*gravity\s*\*\s*mass/;
-    return pattern1.test(code) || pattern2.test(code);
-}
+        const pattern1 = /\s*mass\s*\*\s*gravity/;
+        const pattern2 = /\s*gravity\s*\*\s*mass/;
+        return pattern1.test(code) || pattern2.test(code);
+    }
 
     
 

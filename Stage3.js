@@ -36,20 +36,20 @@ class Stage3 {
     }
 
     handleCanvasClick(event) {
-    const rect = this.game.canvas.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
-    const droneCenterX = this.drone.x;
+        const rect = this.game.canvas.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        const droneCenterX = this.drone.x;
 
-    // If the user clicks near the drone's center, set the desired height
-    if (Math.abs(x - droneCenterX) < 10) {
-        this.desiredHeight = y;
-        this.phase = 1;
+        // If the user clicks near the drone's center, set the desired height
+        if (Math.abs(x - droneCenterX) < 10) {
+            this.desiredHeight = y;
+            this.phase = 1;
 
-        document.getElementById('heightInputContainer').style.visibility = 'hidden';
-        this.showErrorCalculationPrompt();
+            document.getElementById('heightInputContainer').style.visibility = 'hidden';
+            this.showErrorCalculationPrompt();
+        }
     }
-}
 
 
     updateInfoText(text) {
@@ -66,20 +66,20 @@ class Stage3 {
     }
 
     update(dt) {
-    if (this.phase === 3) { // Oscillation phase
-        this.oscillationTime += dt;
-        this.drone.update(dt);
+        if (this.phase === 3) { // Oscillation phase
+            this.oscillationTime += dt;
+            this.drone.update(dt);
 
-        if (this.oscillationTime >= 3) {
-            this.showOscillationPopup();
+            if (this.oscillationTime >= 3) {
+                this.showOscillationPopup();
+            }
+        } else if (this.phase === 4) { // Derivative thrust calculation
+            this.drone.update(dt);
         }
-    } else if (this.phase === 4) { // Derivative thrust calculation
-        this.drone.update(dt);
     }
-}
 
     // Handle thrust submission after error calculation
-handleThrustSubmit() {
+    handleThrustSubmit() {
         const thrustEquationInput = document.getElementById('inputThrust').value.trim();
 
         // Check if the equation includes 'error' and 'hover_thrust'
@@ -118,83 +118,84 @@ handleThrustSubmit() {
     }
 
     startOscillation() {
-    const oscillationDuration = 3; // Oscillate for 3 seconds
-    const oscillationInterval = setInterval(() => {
-        this.oscillationTime += 0.1; // Increment the oscillation time
-        this.updateOscillation(0.016); // Keep the drone oscillating
+        const oscillationDuration = 3; // Oscillate for 3 seconds
+        const oscillationInterval = setInterval(() => {
+            this.oscillationTime += 0.1; // Increment the oscillation time
+            this.updateOscillation(0.016); // Keep the drone oscillating
 
-        // Continue oscillation even after the prompt appears
-        if (this.phase === 4) { 
-            clearInterval(oscillationInterval);
+            // Continue oscillation even after the prompt appears
+            if (this.phase === 4) { 
+                clearInterval(oscillationInterval);
+            }
+        }, 100); // Update every 100 milliseconds
+    }
+
+
+    updateOscillation(dt) {
+        if (this.desiredHeight !== null) {
+            const error = this.desiredHeight - this.drone.y; // Calculate the error
+            const hoverThrust = this.drone.mass * this.gravity; // Calculate hover thrust
+
+            // Evaluate the user-entered thrust equation
+            let thrust;
+            try {
+                thrust = eval(this.proportionalEquation.replace(/error/g, error).replace(/hover_thrust/g, hoverThrust));
+            } catch (e) {
+                this.showError('There was an error in your thrust equation.');
+                return;
+            }
+
+            // Damped oscillation calculation
+            const dampingFactor = 0.1; // Adjust this value for desired damping
+            const dampingThrust = thrust * (1 - dampingFactor); // Apply damping to the thrust
+
+            // Simulate oscillation with damping
+            this.drone.vy += (dampingThrust / this.drone.mass - this.gravity) * dt; // Update vertical velocity
+            this.drone.y += this.drone.vy * dt; // Update position
+
+            // Draw the current forces acting on the drone
+            this.drawForces(thrust, error);
         }
-    }, 100); // Update every 100 milliseconds
-}
+    }
+    
+    // Validate and handle submission of the derivative equation
+    handleDerivativeSubmit() {
+        const derivativeEquationInput = document.getElementById('inputDerivative').value.trim();
 
-
-updateOscillation(dt) {
-    if (this.desiredHeight !== null) {
-        const error = this.desiredHeight - this.drone.y; // Calculate the error
-        const hoverThrust = this.drone.mass * this.gravity; // Calculate hover thrust
-
-        // Evaluate the user-entered thrust equation
-        let thrust;
-        try {
-            thrust = eval(this.proportionalEquation.replace(/error/g, error).replace(/hover_thrust/g, hoverThrust));
-        } catch (e) {
-            this.showError('There was an error in your thrust equation.');
+        // Ensure the equation includes both 'error' and 'derivative(error)'
+        if (!derivativeEquationInput.includes('error') || !derivativeEquationInput.includes('derivative(error)')) {
+            this.showError("The equation must include both 'error' and 'derivative(error)'. Please try again.");
             return;
         }
 
-        // Damped oscillation calculation
-        const dampingFactor = 0.1; // Adjust this value for desired damping
-        const dampingThrust = thrust * (1 - dampingFactor); // Apply damping to the thrust
+        // Attempt to validate the proportional-derivative equation
+        try {
+            // Simulate current error and velocity (derivative of height)
+            const testError = 10;
+            const testDerivative = 2; // Simulated test derivative value
+            const testHoverThrust = this.drone.mass * this.gravity;
 
-        // Simulate oscillation with damping
-        this.drone.vy += (dampingThrust / this.drone.mass - this.gravity) * dt; // Update vertical velocity
-        this.drone.y += this.drone.vy * dt; // Update position
+            // Replace placeholders with test values and evaluate the equation
+            const testThrust = eval(derivativeEquationInput.replace(/error/g, testError)
+                .replace(/derivative\(error\)/g, testDerivative)
+                .replace(/hover_thrust/g, testHoverThrust));
 
-        // Draw the current forces acting on the drone
-        this.drawForces(thrust, error);
-    }
-}
-    // Validate and handle submission of the derivative equation
-    handleDerivativeSubmit() {
-    const derivativeEquationInput = document.getElementById('inputDerivative').value.trim();
+            // Ensure the equation produces a numeric result
+            if (isNaN(testThrust)) {
+                throw new Error("Invalid equation result.");
+            }
 
-    // Ensure the equation includes both 'error' and 'derivative(error)'
-    if (!derivativeEquationInput.includes('error') || !derivativeEquationInput.includes('derivative(error)')) {
-        this.showError("The equation must include both 'error' and 'derivative(error)'. Please try again.");
-        return;
-    }
+            // If valid, save the equation and proceed to stabilization
+            this.derivativeEquation = derivativeEquationInput;
+            this.phase = 4;
 
-    // Attempt to validate the proportional-derivative equation
-    try {
-        // Simulate current error and velocity (derivative of height)
-        const testError = 10;
-        const testDerivative = 2; // Simulated test derivative value
-        const testHoverThrust = this.drone.mass * this.gravity;
+            alert("Derivative equation accepted! Now watch how the drone stabilizes.");
+            document.getElementById('derivativeInputContainer').style.visibility = 'hidden';
 
-        // Replace placeholders with test values and evaluate the equation
-        const testThrust = eval(derivativeEquationInput.replace(/error/g, testError)
-            .replace(/derivative\(error\)/g, testDerivative)
-            .replace(/hover_thrust/g, testHoverThrust));
-
-        // Ensure the equation produces a numeric result
-        if (isNaN(testThrust)) {
-            throw new Error("Invalid equation result.");
+        } catch (error) {
+            this.showError("Invalid derivative equation. Please ensure it is a valid equation and try again.");
         }
-
-        // If valid, save the equation and proceed to stabilization
-        this.derivativeEquation = derivativeEquationInput;
-        this.phase = 4;
-
-        alert("Derivative equation accepted! Now watch how the drone stabilizes.");
-        document.getElementById('derivativeInputContainer').style.visibility = 'hidden';
-
-    } catch (error) {
-        this.showError("Invalid derivative equation. Please ensure it is a valid equation and try again.");
     }
-}
 
 
     draw(ctx) {
@@ -315,59 +316,59 @@ updateOscillation(dt) {
     }
 
     resetDroneForDerivative() {
-    this.drone.y = this.game.canvas.height / 4;
-    this.drone.vy = 0;
+        this.drone.y = this.game.canvas.height / 4;
+        this.drone.vy = 0;
 
-    // Update the text to prompt for the derivative equation
-    this.updateInfoText("To stabilize the drone, we need to add a derivative term. Enter a new thrust equation with a derivative term (e.g., Kp * error + Kd * derivative(error) + hover_thrust).");
+        // Update the text to prompt for the derivative equation
+        this.updateInfoText("To stabilize the drone, we need to add a derivative term. Enter a new thrust equation with a derivative term (e.g., Kp * error + Kd * derivative(error) + hover_thrust).");
 
-    // Show the derivative input box
-    document.getElementById('derivativeInputContainer').style.visibility = 'visible';
-}
+        // Show the derivative input box
+        document.getElementById('derivativeInputContainer').style.visibility = 'visible';
+    }
 
     handleDerivativeSubmit() {
-    const derivativeEquationInput = document.getElementById('inputDerivative').value.trim();
+        const derivativeEquationInput = document.getElementById('inputDerivative').value.trim();
 
-    // Ensure the equation includes both 'error' and 'derivative(error)'
-    if (!derivativeEquationInput.includes('error') || !derivativeEquationInput.includes('derivative(error)')) {
-        this.showError("The equation must include both 'error' and 'derivative(error)'. Please try again.");
-        return;
-    }
-
-    // Attempt to validate the proportional-derivative equation
-    try {
-        // Simulate current error and velocity (derivative of height)
-        const testError = 10;
-        const testDerivative = 2; // Simulated test derivative value
-        const testHoverThrust = this.drone.mass * this.gravity;
-
-        // Replace placeholders with test values and evaluate the equation
-        const testThrust = eval(derivativeEquationInput.replace(/error/g, testError)
-            .replace(/derivative\(error\)/g, testDerivative)
-            .replace(/hover_thrust/g, testHoverThrust));
-
-        // Ensure the equation produces a numeric result
-        if (isNaN(testThrust)) {
-            throw new Error("Invalid equation result.");
+        // Ensure the equation includes both 'error' and 'derivative(error)'
+        if (!derivativeEquationInput.includes('error') || !derivativeEquationInput.includes('derivative(error)')) {
+            this.showError("The equation must include both 'error' and 'derivative(error)'. Please try again.");
+            return;
         }
 
-        // If valid, save the equation and proceed to stabilization
-        this.derivativeEquation = derivativeEquationInput;
-        this.phase = 4;
+        // Attempt to validate the proportional-derivative equation
+        try {
+            // Simulate current error and velocity (derivative of height)
+            const testError = 10;
+            const testDerivative = 2; // Simulated test derivative value
+            const testHoverThrust = this.drone.mass * this.gravity;
 
-        alert("Derivative equation accepted! Now watch the drone stabilize.");
-        document.getElementById('derivativeInputContainer').style.visibility = 'hidden';
+            // Replace placeholders with test values and evaluate the equation
+            const testThrust = eval(derivativeEquationInput.replace(/error/g, testError)
+                .replace(/derivative\(error\)/g, testDerivative)
+                .replace(/hover_thrust/g, testHoverThrust));
 
-    } catch (error) {
-        this.showError("Invalid derivative equation. Please ensure it is a valid equation and try again.");
+            // Ensure the equation produces a numeric result
+            if (isNaN(testThrust)) {
+                throw new Error("Invalid equation result.");
+            }
+
+            // If valid, save the equation and proceed to stabilization
+            this.derivativeEquation = derivativeEquationInput;
+            this.phase = 4;
+
+            alert("Derivative equation accepted! Now watch the drone stabilize.");
+            document.getElementById('derivativeInputContainer').style.visibility = 'hidden';
+
+        } catch (error) {
+            this.showError("Invalid derivative equation. Please ensure it is a valid equation and try again.");
+        }
     }
-}
 
     showOscillationPopup() {
-    this.phase = 4; // Stop oscillation and move to derivative phase
-    alert('The drone is oscillating because it still has velocity. Let’s stabilize it by adding a derivative term.');
-    this.resetDroneForDerivative();
-}
+        this.phase = 4; // Stop oscillation and move to derivative phase
+        alert('The drone is oscillating because it still has velocity. Let’s stabilize it by adding a derivative term.');
+        this.resetDroneForDerivative();
+    }
 
     showCompletionPopup() {
         document.getElementById('completionMessage').style.visibility = 'visible';

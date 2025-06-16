@@ -213,115 +213,115 @@ class Stage5 {
         });
     }
 
-  checkMountainHeight() {
-    if (this.selectedX === null) return;
+    checkMountainHeight() {
+        if (this.selectedX === null) return;
 
-    let peakY;
-    switch (this.functionType) {
-        case 'cos':
-            peakY = this.a * Math.cos(this.b * this.selectedX) + this.c;
-            break;
-        case 'sin':
-            peakY = this.a * Math.sin(this.b * this.selectedX) + this.c;
-            break;
-        case 'poly':
-            peakY = this.a * Math.pow(this.selectedX / 100, 2) + this.b * (this.selectedX / 100) + this.c;
-            break;
-        case 'exp':
-            peakY = this.a * Math.exp(this.b * (this.selectedX / 100)) + this.c;
-            break;
-    }
-
-    try {
-        // Get the user input and extract only the formula (ignore the "mountain_height = " part)
-        let userInput = this.mountainHeightInput.value;
-        
-        // Remove anything before the "=" if it exists
-        userInput = userInput.split('=')[1] ? userInput.split('=')[1].trim() : userInput.trim();
-        
-        // Replace 'setX' with the actual selectedX value
-        userInput = userInput.replace('setX', this.selectedX);
-
-        // Automatically replace sin, cos, exp, pow with Math equivalents
-        userInput = userInput.replace(/\bsin\b/g, 'Math.sin')
-                             .replace(/\bcos\b/g, 'Math.cos')
-                             .replace(/\bexp\b/g, 'Math.exp')
-                             .replace(/\bpow\b/g, 'Math.pow'); // Handle 'pow' for exponents
-
-        // Evaluate the user's formula and calculate the result
-        const userCalculatedHeight = eval(userInput);
-
-        // Debugging: Show the correct peakY and the user's calculated value for comparison
-        console.log(`Correct mountain height (peakY): ${peakY}`);
-        console.log(`Users calculated mountain height: ${userCalculatedHeight}`);
-
-        //Compare the calculated height with the actual peakY value
-        if (Math.abs(userCalculatedHeight - peakY) < 0.1) {
-            alert("Correct! Now enter the equation for the distance.");
-            this.calculatedMountainHeight = true;
-            this.distanceInputContainer.style.visibility = 'visible';
-        } else {
-            alert(`Incorrect. Your value: ${userCalculatedHeight}, Expected: ${peakY}`);
+        let peakY;
+        switch (this.functionType) {
+            case 'cos':
+                peakY = this.a * Math.cos(this.b * this.selectedX) + this.c;
+                break;
+            case 'sin':
+                peakY = this.a * Math.sin(this.b * this.selectedX) + this.c;
+                break;
+            case 'poly':
+                peakY = this.a * Math.pow(this.selectedX / 100, 2) + this.b * (this.selectedX / 100) + this.c;
+                break;
+            case 'exp':
+                peakY = this.a * Math.exp(this.b * (this.selectedX / 100)) + this.c;
+                break;
         }
-    } catch (error) {
-        alert(`There was an error with your input: ${error.message}. Please check the format and try again.`);
+
+        try {
+            // Get the user input and extract only the formula (ignore the "mountain_height = " part)
+            let userInput = this.mountainHeightInput.value;
+            
+            // Remove anything before the "=" if it exists
+            userInput = userInput.split('=')[1] ? userInput.split('=')[1].trim() : userInput.trim();
+            
+            // Replace 'setX' with the actual selectedX value
+            userInput = userInput.replace('setX', this.selectedX);
+
+            // Automatically replace sin, cos, exp, pow with Math equivalents
+            userInput = userInput.replace(/\bsin\b/g, 'Math.sin')
+                                .replace(/\bcos\b/g, 'Math.cos')
+                                .replace(/\bexp\b/g, 'Math.exp')
+                                .replace(/\bpow\b/g, 'Math.pow'); // Handle 'pow' for exponents
+
+            // Evaluate the user's formula and calculate the result
+            const userCalculatedHeight = eval(userInput);
+
+            // Debugging: Show the correct peakY and the user's calculated value for comparison
+            console.log(`Correct mountain height (peakY): ${peakY}`);
+            console.log(`Users calculated mountain height: ${userCalculatedHeight}`);
+
+            //Compare the calculated height with the actual peakY value
+            if (Math.abs(userCalculatedHeight - peakY) < 0.1) {
+                alert("Correct! Now enter the equation for the distance.");
+                this.calculatedMountainHeight = true;
+                this.distanceInputContainer.style.visibility = 'visible';
+            } else {
+                alert(`Incorrect. Your value: ${userCalculatedHeight}, Expected: ${peakY}`);
+            }
+        } catch (error) {
+            alert(`There was an error with your input: ${error.message}. Please check the format and try again.`);
+        }
     }
-}
 
 
     checkDistance() {
-    if (!this.calculatedMountainHeight || this.selectedX === null) return;
+        if (!this.calculatedMountainHeight || this.selectedX === null) return;
 
-    let peakY;
-    switch (this.functionType) {
-        case 'cos':
-            peakY = this.a * Math.cos(this.b * this.selectedX) + this.c;
-            break;
-        case 'sin':
-            peakY = this.a * Math.sin(this.b * this.selectedX) + this.c;
-            break;
-        case 'poly':
-            peakY = this.a * Math.pow(this.selectedX / 100, 2) + this.b * (this.selectedX / 100) + this.c;
-            break;
-        case 'exp':
-            peakY = this.a * Math.exp(this.b * (this.selectedX / 100)) + this.c;
-            break;
-    }
-
-    try {
-        // Get the user's input for the distance equation
-        let userInput = this.distanceInput.value;
-
-        // Remove anything before the "=" to evaluate only the formula (ignore "distance =")
-        userInput = userInput.split('=')[1] ? userInput.split('=')[1].trim() : userInput.trim();
-
-        // Replace 'setY' with the actual y-coordinate from the selected point
-        userInput = userInput.replace('setY', this.selectedY);
-        // Replace 'mountain_height' with the calculated peakY value
-        userInput = userInput.replace('mountain_height', peakY);
-
-        // Evaluate the user's formula and calculate the result
-        const userCalculatedDistance = eval(userInput);
-
-        // Correct the actual distance by subtracting peakY from the canvas height (inverting the coordinate system)
-        const actualDistance = Math.abs(this.selectedY - peakY);
-
-        // Compare the user's calculated distance with the actual distance
-        if (Math.abs(userCalculatedDistance - actualDistance) < 0.1) {
-            alert("Stage Complete! You calculated the correct distance.");
-
-            // Link to Stage 6
-            const linkToStage6 = document.createElement('a');
-            linkToStage6.href = "Stage6.js"; // Assuming the link to Stage 6 is Stage6.html
-            linkToStage6.innerText = "Go to Stage 6";
-            this.distanceInputContainer.appendChild(linkToStage6);
-        } else {
-            alert(`Incorrect distance. Try again! Your result: ${userCalculatedDistance}, Expected: ${actualDistance}`);
+        let peakY;
+        switch (this.functionType) {
+            case 'cos':
+                peakY = this.a * Math.cos(this.b * this.selectedX) + this.c;
+                break;
+            case 'sin':
+                peakY = this.a * Math.sin(this.b * this.selectedX) + this.c;
+                break;
+            case 'poly':
+                peakY = this.a * Math.pow(this.selectedX / 100, 2) + this.b * (this.selectedX / 100) + this.c;
+                break;
+            case 'exp':
+                peakY = this.a * Math.exp(this.b * (this.selectedX / 100)) + this.c;
+                break;
         }
-    } catch (error) {
-        alert(`There was an error with your input: ${error.message}. Please check the format and try again.`);
+
+        try {
+            // Get the user's input for the distance equation
+            let userInput = this.distanceInput.value;
+
+            // Remove anything before the "=" to evaluate only the formula (ignore "distance =")
+            userInput = userInput.split('=')[1] ? userInput.split('=')[1].trim() : userInput.trim();
+
+            // Replace 'setY' with the actual y-coordinate from the selected point
+            userInput = userInput.replace('setY', this.selectedY);
+            // Replace 'mountain_height' with the calculated peakY value
+            userInput = userInput.replace('mountain_height', peakY);
+
+            // Evaluate the user's formula and calculate the result
+            const userCalculatedDistance = eval(userInput);
+
+            // Correct the actual distance by subtracting peakY from the canvas height (inverting the coordinate system)
+            const actualDistance = Math.abs(this.selectedY - peakY);
+
+            // Compare the user's calculated distance with the actual distance
+            if (Math.abs(userCalculatedDistance - actualDistance) < 0.1) {
+                alert("Stage Complete! You calculated the correct distance.");
+
+                // Link to Stage 6
+                const linkToStage6 = document.createElement('a');
+                linkToStage6.href = "Stage6.js"; // Assuming the link to Stage 6 is Stage6.html
+                linkToStage6.innerText = "Go to Stage 6";
+                this.distanceInputContainer.appendChild(linkToStage6);
+            } else {
+                alert(`Incorrect distance. Try again! Your result: ${userCalculatedDistance}, Expected: ${actualDistance}`);
+            }
+        } catch (error) {
+            alert(`There was an error with your input: ${error.message}. Please check the format and try again.`);
+        }
     }
-}
 
 
 
