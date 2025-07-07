@@ -12,11 +12,12 @@
             height: 100%;
             width: 100%;
         }
+
         #gameCanvas {
             display: block;
         }
         
-     #welcomeScreen {
+        #welcomeScreen {
             position: absolute;
             top: 0;
             left: 0;
@@ -69,6 +70,20 @@
             position: absolute;
             top: 50px;
             left: 10px;
+            z-index: 1000;
+        }
+
+        /*REMOVE LATER*/
+        #gameContent {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+            max-width: 600px;
+            position: absolute;
+            top: 300px;
+            left: 300px;
             z-index: 1000;
         }
         
@@ -193,15 +208,15 @@
             font-size: 16px;
         }
         
-      #errorInputContainer {
-   		position: absolute;
-  		  top: 300px; /* Adjust as necessary */
-   		 left: 20px; /* Adjust as necessary */
-  		 z-index: 1000;
-   		 background-color: #f9f9f9;
-   		 padding: 10px;
-   		 border: 1px solid #ccc;
-}
+        #errorInputContainer {
+            position: absolute;
+            top: 300px; /* Adjust as necessary */
+            left: 20px; /* Adjust as necessary */
+            z-index: 1000;
+            background-color: #f9f9f9;
+            padding: 10px;
+            border: 1px solid #ccc;
+        }
 
  		#mountainStageContainer {
             visibility: hidden;  /* Start hidden */
@@ -222,40 +237,61 @@
             margin-left: 120px;
         }
 
-				#thrustInputContainer {
-    visibility: hidden;  /* Start hidden */
-    position: absolute;
-    top: 300px;
-    left: 30px;
-    width: 500px;
-    z-index: 1000;
-    background-color: #f9f9f9;
-    padding: 10px;
-    border: 1px solid #ccc;
-    display: flex;
-    align-items: center;
-}
+        #thrustInputContainer {
+            visibility: hidden;  /* Start hidden */
+            position: absolute;
+            top: 300px;
+            left: 30px;
+            width: 500px;
+            z-index: 1000;
+            background-color: #f9f9f9;
+            padding: 10px;
+            border: 1px solid #ccc;
+            display: flex;
+            align-items: center;
+        }
 
-#thrustInputContainer .label {
-    font-family: Arial, sans-serif;
-    font-size: 16px;
-    margin-right: 10px;
-    top: 40px;
-}
+        #thrustInputContainer .label {
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            margin-right: 10px;
+            top: 40px;
+        }
 
-#inputThrust {
-    font-family: Arial, sans-serif;
-    padding: 10px;
-    width: 60%; /* Adjusted width */
-    margin-right: 10px; /* Space between input and button */
-    margin-left: 60px;
-}
+        #derivativeInputContainer {
+            visibility: hidden;  /* Start hidden */
+            position: absolute;
+            top: 300px;
+            left: 30px;
+            width: 750px;
+            z-index: 1000;
+            background-color: #f9f9f9;
+            padding: 10px;
+            border: 1px solid #ccc;
+            display: flex;
+            align-items: center;
+        }
 
-#submitThrustButton {
-    font-family: Arial, sans-serif;
-    padding: 10px 20px;
-    cursor: pointer;
-}
+        #derivativeInputContainer .label {
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            margin-right: 10px;
+            top: 40px;
+        }
+
+        #inputThrust {
+            font-family: Arial, sans-serif;
+            padding: 10px;
+            width: 60%; /* Adjusted width */
+            margin-right: 10px; /* Space between input and button */
+            margin-left: 60px;
+        }
+
+        #submitThrustButton {
+            font-family: Arial, sans-serif;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
 
 				
         #nextStepButton {
@@ -264,6 +300,28 @@
             margin-top: 10px;
             cursor: pointer;
             visibility: hidden; /* Initially hidden */
+        }
+
+        #startStage4Button {
+         font-family: Arial, sans-serif;
+            padding: 10px 20px;
+            margin: 20px;
+            cursor: pointer;
+            position: absolute;
+            top: 30px;
+            left:0px;
+            z-index: 1000;
+        }
+
+        .submitButton {
+            font-family: Arial, sans-serif;
+            padding: 10px 20px;
+            margin: 20px;
+            cursor: pointer;
+            position: absolute;
+            top: 30px;
+            left:0px;
+            z-index: 1000;
         }
         
     </style>
@@ -296,6 +354,10 @@
         <h1>Welcome to the Mars Drone Game!</h1>
         <p>This is a game meant to teach basic physics, coding, and math behind control systems.</p>
         <button id="startGameButton">Start Game</button>
+    </div>
+
+    <!-- Stages -->
+    <div id="gameContent">
     </div>
     <!-- Stage 1 Input -->
     <div id="completionMessage" style="visibility: hidden;">Congratulations! You have completed Stage 1.</div>
@@ -353,7 +415,7 @@
 
 		
 		<!-- Stage 4 -->
-		<button id="startStage4Button">Start Stage 4</button>
+<button id="startStage4Button">Start Stage 4</button>
 <input id="inputThrust" type="number" placeholder="Enter Thrust">
 <button id="submitPowerButton">Submit Thrust</button>
 <div id="batteryDisplay" style="width: 100%; height: 20px; background-color: green;"></div>

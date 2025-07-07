@@ -182,7 +182,7 @@ class Stage3 {
 
             // Ensure the equation produces a numeric result
             if (isNaN(testThrust)) {
-                throw new Error("Invalid equation result.");
+               throw new Error("Invalid equation result.");
             }
 
             // If valid, save the equation and proceed to stabilization
@@ -193,6 +193,7 @@ class Stage3 {
             document.getElementById('derivativeInputContainer').style.visibility = 'hidden';
 
         } catch (error) {
+            console.log(error);
             this.showError("Invalid derivative equation. Please ensure it is a valid equation and try again.");
         }
     }
@@ -326,7 +327,7 @@ class Stage3 {
         document.getElementById('derivativeInputContainer').style.visibility = 'visible';
     }
 
-    handleDerivativeSubmit() {
+   /* handleDerivativeSubmit() {
         const derivativeEquationInput = document.getElementById('inputDerivative').value.trim();
 
         // Ensure the equation includes both 'error' and 'derivative(error)'
@@ -362,7 +363,7 @@ class Stage3 {
         } catch (error) {
             this.showError("Invalid derivative equation. Please ensure it is a valid equation and try again.");
         }
-    }
+    }*/
 
     showOscillationPopup() {
         this.phase = 4; // Stop oscillation and move to derivative phase

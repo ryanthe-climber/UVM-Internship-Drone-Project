@@ -11,7 +11,7 @@ class Stage4 {
             const startButton = document.getElementById('startStage4Button');
             if (startButton) {
                 startButton.addEventListener('click', () => {
-                    this.startStage4();
+                    this.start();
                 });
             }
 
@@ -24,8 +24,11 @@ class Stage4 {
         });
     }
 
-    startStage4() {
-        // Logic for starting Stage 4
+    start() {
+        document.getElementById('startStage4Button').style.visibility = 'visable';
+        document.getElementById('inputThrust').style.visibility = 'hidden';
+        document.getElementById('submitPowerButton').style.visibility = 'hidden';
+        document.getElementById('batteryDisplay').style.visibility = 'visable';
         alert("Starting Stage 4 - Battery Consumption...");
     }
 
@@ -54,6 +57,19 @@ class Stage4 {
 
     update(dt) {
         this.updateBatteryDisplay();
+    }
+
+    endStage4() {
+        // Hide elements specific to Stage 4
+        /*
+        document.getElementById('completionMessage').style.visibility = 'hidden';
+        document.getElementById('hoverThrustContainer').style.visibility = 'hidden';
+        document.getElementById('hintButtonStage2').style.visibility = 'hidden';
+        document.getElementById('info').style.visibility = 'hidden';
+        */
+
+        // Transition to Stage 5
+        this.game.startStage(Stage5);
     }
 }
 

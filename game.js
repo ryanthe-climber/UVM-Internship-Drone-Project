@@ -82,6 +82,91 @@ class Game {
         this.ctx.drawImage(this.droneImage, -20, -20, 80, 80); // Adjust size and position as needed
         this.ctx.restore();
     }
+
+    createPhaseDOM( stagediv/*current stage div*/,
+                    teachingText/*string*/, 
+                    submitInstruction/*string*/, 
+                    checkAnswerCB/*bool function(String input)*/, 
+                    wrongAnswerCB/*string function(String input)*/, 
+                    hintText/*String*/,
+                    nextPhaseCB/*void function*/,
+                    placeholder/*String*/)
+    {
+        let hintShown = false;
+
+        //create phase div
+        let phaseDiv = document.createElement("div");
+        phaseDiv.setAttribute("id", "phaseDiv");
+        let teachDiv = document.createElement("div");
+        teachDiv.setAttribute("id", "teachDiv");
+        let inputDiv = document.createElement("div");
+        inputDiv.setAttribute("id", "inputDiv");
+        let hintButtonDiv = document.createElement("div");
+        hintButtonDiv.setAttribute("id", "hintButtonDiv");
+        //display teaching text
+        teachDiv.appendChild(document.createTextNode(teachingText));
+        //input
+        let inputBox = document.createElement("input");
+        inputBox.setAttribute("id", "inputBox");
+        inputBox.setAttribute("type", "text"); 
+        inputBox.setAttribute("placeholder", placeholder);//maybe pass in a variable for the place holder
+
+        //button to submit input
+        let submitButton = document.createElement("button");
+        submitButton.setAttribute("class", "submitButton");
+        submitButton.appendChild(document.createTextNode("Submit"));
+        submitButton.addEventListener('click', () => {
+            //check answer
+            let correct = checkAnswerCB(inputBox.value.trim());
+            //if wrong, wrong answer function
+            if(!correct) {
+                wrongAnswerCB();
+                //button for hint
+                if(!hintShown) {
+                    let hintButton = document.createElement("button");
+                    hintButton.appendChild(document.createTextNode("Hint"));
+                    hintButtonDiv.appendChild(hintButton);
+
+                    hintButton.addEventListener('click', () => {
+                        alert(hintText);
+                    });
+                    
+                    hintShown = true;
+                }
+            } else {
+                //when correct, next phase
+                nextPhaseCB();
+            }
+        });
+        inputDiv.appendChild(document.createTextNode(submitInstruction));
+        inputDiv.appendChild(inputBox);
+        inputDiv.appendChild(submitButton);
+
+        
+        phaseDiv.appendChild(teachDiv);
+        phaseDiv.appendChild(inputDiv);
+        phaseDiv.appendChild(hintButtonDiv);
+
+        stagediv.appendChild(phaseDiv);
+
+        return phaseDiv;
+    }
+
+    stageExplainationDOM(currentStage, stageDiv, explaination, buttonText) {
+        let button = document.createElement("button");
+        button.appendChild(document.createTextNode(buttonText));
+
+        let explainationDiv = document.createElement("div");
+        explainationDiv.setAttribute("id", "explainationDiv");
+        explainationDiv.appendChild(document.createTextNode(explaination));
+        explainationDiv.appendChild(button);
+        stageDiv.appendChild(explainationDiv);
+
+        button.addEventListener('click', () => {
+            stageDiv.removeChild(explainationDiv);
+            currentStage.nextPhase();
+        }); 
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
