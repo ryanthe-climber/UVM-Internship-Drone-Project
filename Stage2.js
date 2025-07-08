@@ -8,6 +8,7 @@ class Stage2 {
 
         this.stagediv = document.createElement("div");
         this.stagediv.setAttribute("id", "Stage2div");
+        this.stagediv.setAttribute("class", "stageDiv");
         this.gameContent = document.getElementById("gameContent");
         gameContent.appendChild(this.stagediv);
         this.managePhases();
@@ -64,9 +65,11 @@ class Stage2 {
         this.gameContent.removeChild(this.stagediv);
         let completionDiv = document.createElement("div");
         completionDiv.setAttribute("id", "completionDiv");
+        completionDiv.setAttribute("class", "completionDiv textDiv");
         completionDiv.appendChild(document.createTextNode("Stage 2 Completed"));
 
         let nextButton = document.createElement("button");
+        nextButton.setAttribute("class", "nextButton");
         nextButton.appendChild(document.createTextNode("Stage 3 - Altitude Control"));
         completionDiv.appendChild(nextButton);
 

@@ -4,9 +4,11 @@ class Stage1 {
         this.drone = game.drone;
         this.positionUpdateCode = '';
         this.phase = 0;
+        this.stageEnded = false;
 
         this.stagediv = document.createElement("div");
         this.stagediv.setAttribute("id", "stage1div");
+        this.stagediv.setAttribute("class", "stageDiv");
         this.gameContent = document.getElementById("gameContent");
         gameContent.appendChild(this.stagediv);
         this.managePhases();
@@ -24,6 +26,7 @@ class Stage1 {
                     break;
 
             default:this.endStage();
+                    this.stageEnded = true;
                     break;
         }
     }
@@ -58,8 +61,9 @@ class Stage1 {
 
     nextPhase() {
         this.phase++;
-        this.managePhases();
-
+        if(this.phase < 2) {
+            this.managePhases();
+        }
         //specific to stage 1:
         if(this.phase == 2) {
             this.codeSubmitted = true;
@@ -71,9 +75,11 @@ class Stage1 {
         this.gameContent.removeChild(this.stagediv);
         let completionDiv = document.createElement("div");
         completionDiv.setAttribute("id", "completionDiv");
+        completionDiv.setAttribute("class", "completionDiv textDiv");
         completionDiv.appendChild(document.createTextNode("Stage 1 Completed"));
 
         let nextButton = document.createElement("button");
+        nextButton.setAttribute("class", "nextButton");
         nextButton.appendChild(document.createTextNode("Stage 2 - Hover Thrust"));
         completionDiv.appendChild(nextButton);
 
@@ -119,11 +125,12 @@ class Stage1 {
         */
     }
 
-    getInitialInfoText() {//REMOVE ANSWER
-        return `previous_height + velocity * time\nFirst, let’s first get started with understanding how the drone moves. Right now the drone is in free fall. That means the only force acting on the drone is gravity.
-            Acceleration is the change in velocity over time, also known as the derivative (Dv/Dt). So the equation for velocity is:
-            velocity = previous_velocity + acceleration * time
-            Similarly, velocity is the change in position. Using the variables current_height and previous_height, in addition to the ones above, enter the equation for current_height.`;
+    getInitialInfoText() {
+        return `<p>First, let’s first get started with understanding how the drone moves. Right now the drone is in free fall. That means the only force acting on the drone is gravity.</p>
+        <p>Acceleration is the change in velocity over time, also known as the derivative (Dv/Dt). So the equation for velocity is:</p>
+        <pre>velocity = previous_velocity + acceleration * time</pre>
+        <p>Similarly, velocity is the change in position. Using the variables current_height and previous_height, in addition to the ones above, enter the equation for current_height.</p>
+        <p><b>ANSWER:</b> previous_height + velocity * time</p>`;
     }
 
     updatePosition(dt) {
@@ -143,6 +150,9 @@ class Stage1 {
                     this.drone.vx = 0;
                     this.drone.vy = 0;
                     this.drone.crashed = true;
+                    if(!this.stageEnded) {
+                        this.managePhases();
+                    }
                 } else if (this.drone.y < 0) {
                     throw new Error("Position is below ground level, check your equation.");
                 }

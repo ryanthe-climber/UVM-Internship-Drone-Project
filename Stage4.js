@@ -25,7 +25,7 @@ class Stage4 {
     }
 
     start() {
-        document.getElementById('startStage4Button').style.visibility = 'visable';
+        document.getElementById('startStage4Button').style.visibility = 'hidden';
         document.getElementById('inputThrust').style.visibility = 'hidden';
         document.getElementById('submitPowerButton').style.visibility = 'hidden';
         document.getElementById('batteryDisplay').style.visibility = 'visable';

@@ -97,19 +97,30 @@ class Game {
         //create phase div
         let phaseDiv = document.createElement("div");
         phaseDiv.setAttribute("id", "phaseDiv");
+        phaseDiv.setAttribute("class", "phaseDiv");
+
         let teachDiv = document.createElement("div");
         teachDiv.setAttribute("id", "teachDiv");
+        teachDiv.setAttribute("class", "teachDiv textDiv");
+
         let inputDiv = document.createElement("div");
         inputDiv.setAttribute("id", "inputDiv");
+        inputDiv.setAttribute("class", "inputDiv textDiv");
+
         let hintButtonDiv = document.createElement("div");
         hintButtonDiv.setAttribute("id", "hintButtonDiv");
+        hintButtonDiv.setAttribute("class", "hintButtonDiv");
+
         //display teaching text
-        teachDiv.appendChild(document.createTextNode(teachingText));
+        let teachText = document.createElement("p");
+        teachText.innerHTML = teachingText;
+
+        teachDiv.appendChild(teachText);
         //input
         let inputBox = document.createElement("input");
         inputBox.setAttribute("id", "inputBox");
         inputBox.setAttribute("type", "text"); 
-        inputBox.setAttribute("placeholder", placeholder);//maybe pass in a variable for the place holder
+        inputBox.setAttribute("placeholder", placeholder);
 
         //button to submit input
         let submitButton = document.createElement("button");
@@ -154,10 +165,13 @@ class Game {
 
     stageExplainationDOM(currentStage, stageDiv, explaination, buttonText) {
         let button = document.createElement("button");
+        button.setAttribute("class", "nextButton");
         button.appendChild(document.createTextNode(buttonText));
 
         let explainationDiv = document.createElement("div");
         explainationDiv.setAttribute("id", "explainationDiv");
+        explainationDiv.setAttribute("class", "explainationDiv textDiv");
+
         explainationDiv.appendChild(document.createTextNode(explaination));
         explainationDiv.appendChild(button);
         stageDiv.appendChild(explainationDiv);

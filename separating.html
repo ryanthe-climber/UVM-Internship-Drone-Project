@@ -68,22 +68,8 @@
             background-color: #f9f9f9;
             max-width: 600px;
             position: absolute;
-            top: 50px;
-            left: 10px;
-            z-index: 1000;
-        }
-
-        /*REMOVE LATER*/
-        #gameContent {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            padding: 10px;
-            border: 1px solid #ccc;
-            background-color: #f9f9f9;
-            max-width: 600px;
-            position: absolute;
-            top: 300px;
-            left: 300px;
+            top: 500px;
+            left: 1000px;
             z-index: 1000;
         }
         
@@ -195,11 +181,12 @@
   				 background-color: #f9f9f9;
    				 padding: 10px;
    				 border: 1px solid #ccc;
-			}
+		}
 
-			#hintButtonStage3 {
-   		 margin-top: 10px;
-			}
+		#hintButtonStage3 {
+   		    margin-top: 10px;
+		}
+
         .label {
             position: absolute;
             top: 20px;
@@ -311,18 +298,90 @@
             top: 30px;
             left:0px;
             z-index: 1000;
+            visibility: hidden;
         }
 
-        .submitButton {
+
+
+        /*REMOVE LATER*/
+        #gameContent {
             font-family: Arial, sans-serif;
-            padding: 10px 20px;
-            margin: 20px;
-            cursor: pointer;
+            /*margin: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+            max-width: 600px;
+            height: 100%;
+            width: 100%;*/
             position: absolute;
-            top: 30px;
-            left:0px;
+            top: 0px;
+            left: 0px;
             z-index: 1000;
         }
+
+        div :not(#gameContent) {
+            position: relative;
+        }
+
+        .textDiv {
+            background-color: #f9f9f9;
+            margin: 20px;
+            padding: 10px;
+            border: 1px solid #000000;
+        }
+
+        .stageDiv {
+            top: 0px;
+            left: 0px;
+            max-width: 600px;
+        }
+
+        .explainationDiv {
+            background-color: #f9f9f9;
+            top: 0px;
+            left: 0px;
+        }
+
+        .phaseDiv {
+            top: 0px;
+            left: 0px;
+        }
+
+        .teachDiv {
+            top: 0px;
+            left: 0px;
+        }
+
+        .inputDiv {
+            top: 0px;
+            left: 0px;
+        }
+
+        .hintButtonDiv {
+            top: 0px;
+            left: 0px;
+            margin: 20px;
+        }
+
+        .nextButton {
+            margin-left: 20px;
+        }
+
+        /*.completionDiv {
+            height: 100%;
+            width: 100%;
+            align-content: center;
+            justify-items: center;
+        }*/
+
+        .submitButton {
+            padding: 10px 20px;
+            margin-left: 10px;
+            cursor: pointer;
+            position: relative;
+        }
+
+
         
     </style>
 </head>
@@ -415,7 +474,7 @@
 
 		
 		<!-- Stage 4 -->
-<button id="startStage4Button">Start Stage 4</button>
+<button id="startStage4Button" visibility="hidden">Start Stage 4</button>
 <input id="inputThrust" type="number" placeholder="Enter Thrust">
 <button id="submitPowerButton">Submit Thrust</button>
 <div id="batteryDisplay" style="width: 100%; height: 20px; background-color: green;"></div>
@@ -461,9 +520,9 @@
         document.getElementById('startGameButton').addEventListener('click', function() {
             document.getElementById('welcomeScreen').style.display = 'none';
             document.getElementById('gameCanvas').style.visibility = 'visible';
-            document.getElementById('info').style.visibility = 'visible';
+            document.getElementById('info').style.visibility = 'hidden';
             document.querySelector('.hamburger-menu').style.visibility = 'visible';
-            document.getElementById('startButton').style.visibility = 'visible';
+            document.getElementById('startButton').style.visibility = 'hidden';
         });
     </script>
 </body>

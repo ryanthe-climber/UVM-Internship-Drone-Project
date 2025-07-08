@@ -66,6 +66,7 @@
         this.gameContent.removeChild(this.stagediv);
         let completionDiv = document.createElement("div");
         completionDiv.setAttribute("id", "completionDiv");
+        completionDiv.setAttribute("class", "completionDiv textDiv");
         completionDiv.appendChild(document.createTextNode("Stage Template Completed"));
 
         let nextButton = document.createElement("button");
