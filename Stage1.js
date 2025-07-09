@@ -9,6 +9,7 @@ class Stage1 {
         this.stagediv = document.createElement("div");
         this.stagediv.setAttribute("id", "stage1div");
         this.stagediv.setAttribute("class", "stageDiv");
+    
         this.gameContent = document.getElementById("gameContent");
         gameContent.appendChild(this.stagediv);
         this.managePhases();
@@ -25,14 +26,14 @@ class Stage1 {
             case 1: this.phase1();
                     break;
 
-            default:this.endStage();
+            default:this.game.endStage("Stage 1 Completed", "Stage 2 - Hover Thrust", Stage2, this);
                     this.stageEnded = true;
                     break;
         }
     }
 
     phase1() {
-        game.createPhaseDOM(this.stagediv,
+        this.currentPhaseDiv = game.createPhaseDOM(this.stagediv,
                             this.getInitialInfoText(), 
                             "current_height = ", 
                             this.validateUserCode.bind(this), 
@@ -50,6 +51,13 @@ class Stage1 {
         let correct = expectedPattern.test(code);
         if(correct) {
             this.positionUpdateCode = code;
+
+            this.stagediv.removeChild(this.currentPhaseDiv);
+
+            this.displayDiv = document.createElement("div");
+            this.displayDiv.setAttribute("id", "displayDiv");
+            this.displayDiv.setAttribute("class", "displayDiv textDiv");
+            this.stagediv.appendChild(this.displayDiv);
         }
         return correct;
     }
@@ -69,26 +77,6 @@ class Stage1 {
             this.codeSubmitted = true;
         }
         
-    }
-
-    endStage() {
-        this.gameContent.removeChild(this.stagediv);
-        let completionDiv = document.createElement("div");
-        completionDiv.setAttribute("id", "completionDiv");
-        completionDiv.setAttribute("class", "completionDiv textDiv");
-        completionDiv.appendChild(document.createTextNode("Stage 1 Completed"));
-
-        let nextButton = document.createElement("button");
-        nextButton.setAttribute("class", "nextButton");
-        nextButton.appendChild(document.createTextNode("Stage 2 - Hover Thrust"));
-        completionDiv.appendChild(nextButton);
-
-        nextButton.addEventListener('click', () => {
-            this.gameContent.removeChild(completionDiv);
-            this.game.startStage(Stage2);
-        });
-
-        this.gameContent.appendChild(completionDiv);
     }
 
     update(dt) {
@@ -167,7 +155,7 @@ class Stage1 {
 
 
     displayVelocityAndPosition() { //change this - ask dad
-        const info = document.getElementById('info');
+        const info = this.displayDiv;
         info.innerHTML = `
             <p>Velocity: ${this.drone.vy.toFixed(2)} m/s</p>
             <p>Position: (${this.drone.x.toFixed(2)}, ${this.drone.y.toFixed(2)})</p>

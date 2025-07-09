@@ -10,17 +10,84 @@ class Stage3 {
         this.constant = 0; // Coefficient for error
         this.derivativeConstant = 0; // Coefficient for derivative
 
-        // Event listeners
-        document.getElementById('hintButtonStage3').addEventListener('click', () => {
-            this.showHint();
-        });
-
-        document.getElementById('submitErrorButton').addEventListener('click', () => this.handleErrorSubmit());
-        document.getElementById('submitThrustButton').addEventListener('click', () => this.handleThrustSubmit());
-        document.getElementById('submitDerivativeButton').addEventListener('click', () => this.handleDerivativeSubmit());
-
-        this.game.canvas.addEventListener('click', (event) => this.handleCanvasClick(event));
+        this.stagediv = document.createElement("div");
+        this.stagediv.setAttribute("id", "Stage3Div");
+        this.stagediv.setAttribute("class", "stageDiv");
+        this.gameContent = document.getElementById("gameContent");
+        gameContent.appendChild(this.stagediv);
+        this.managePhases();
     }
+
+    start() {
+        return;
+    }
+
+    managePhases() {
+        switch(this.phase) {
+            case 0: game.stageExplainationDOM(  this, 
+                                                this.stagediv, 
+                                                "In this stage, you will control the drone’s altitude. Click on the dotted red line to set the desired altitude, and the drone will adjust its thrust accordingly.", 
+                                                "buttonText");
+                    break;
+            case 1: this.phase1();
+                    break;
+
+            default:this.game.endStage(message, nextText, nextStage, currentStage);
+                    break;
+        }
+    }
+
+    phase1() {
+        this.currentPhaseDiv = game.createPhaseDOM(this.stagediv,
+                            "Teaching Text", 
+                            "Submit Instruction", 
+                            this.validateUserCode, 
+                            this.wrongAnswer, 
+                            "Hint",
+                            this.nextPhase.bind(this),
+                            "Input Place Holder");  
+
+        //other code dependant on phase
+    }
+
+    validateUserCode(code) {
+        //check input
+
+        const pattern1 = /\s*mass\s*\*\s*gravity/i;
+        const pattern2 = /\s*gravity\s*\*\s*mass/i;
+        return pattern1.test(code) || pattern2.test(code);
+
+    }
+
+    wrongAnswer() {
+        //determine what is wrong with answer and give feedback
+        alert('This is incorrect, please try again.');
+    }
+
+    nextPhase() {
+        this.phase++;
+        this.managePhases();
+    }
+
+    update(dt) {
+        // No dynamic update needed for this stage
+    }
+
+    draw(ctx) {
+        ctx.clearRect(0, 0, this.game.canvas.width, this.game.canvas.height);
+        this.game.drawBackground();
+        this.game.drawDrone();
+    }
+
+    cleanup() {
+        // Optional: Cleanup logic for Stage if needed
+    }
+
+
+
+
+
+
 
     start() {
         this.drone.y = this.game.canvas.height / 4;

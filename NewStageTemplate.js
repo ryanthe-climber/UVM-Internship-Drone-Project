@@ -8,6 +8,7 @@
 
         this.stagediv = document.createElement("div");
         this.stagediv.setAttribute("id", "StageTemplateDiv");
+        this.stagediv.setAttribute("class", stageDiv);
         this.gameContent = document.getElementById("gameContent");
         gameContent.appendChild(this.stagediv);
         this.managePhases();
@@ -24,13 +25,13 @@
             case 1: this.phase1();
                     break;
 
-            default:this.endStage();
+            default:this.game.endStage(message, nextText, nextStage, currentStage);
                     break;
         }
     }
 
     phase1() {
-        game.createPhaseDOM(this.stagediv,
+        this.currentPhaseDiv = game.createPhaseDOM(this.stagediv,
                             "Teaching Text", 
                             "Submit Instruction", 
                             this.validateUserCode, 
@@ -60,25 +61,6 @@
     nextPhase() {
         this.phase++;
         this.managePhases();
-    }
-
-    endStage() {
-        this.gameContent.removeChild(this.stagediv);
-        let completionDiv = document.createElement("div");
-        completionDiv.setAttribute("id", "completionDiv");
-        completionDiv.setAttribute("class", "completionDiv textDiv");
-        completionDiv.appendChild(document.createTextNode("Stage Template Completed"));
-
-        let nextButton = document.createElement("button");
-        nextButton.appendChild(document.createTextNode("nextStage"));
-        completionDiv.appendChild(nextButton);
-
-        nextButton.addEventListener('click', () => {
-            this.gameContent.removeChild(completionDiv);
-            this.game.startStage(/*NEXT STAGE OBJECT*);
-        });
-
-        this.gameContent.appendChild(completionDiv);
     }
 
     update(dt) {

@@ -33,6 +33,25 @@ class Game {
         this.currentStage.start();
     }
 
+    endStage(message, nextText, nextStage, currentStage) {
+        currentStage.gameContent.removeChild(currentStage.stagediv);
+        let completionDiv = document.createElement("div");
+        completionDiv.setAttribute("id", "completionDiv");
+        completionDiv.setAttribute("class", "completionDiv textDiv");
+        completionDiv.appendChild(document.createTextNode(message));
+
+        let nextButton = document.createElement("button");
+        nextButton.setAttribute("class", "nextButton");
+        nextButton.appendChild(document.createTextNode(nextText));
+        completionDiv.appendChild(nextButton);
+
+        nextButton.addEventListener('click', () => {
+            currentStage.gameContent.removeChild(completionDiv);
+            currentStage.game.startStage(nextStage);
+        });
+
+        currentStage.gameContent.appendChild(completionDiv);
+    }
 
     gameLoop(time) {
         const dt = (time - this.lastTime) / 1000;
@@ -49,7 +68,6 @@ class Game {
 
         requestAnimationFrame(this.gameLoop.bind(this));
     }
-
 
     run() {
         this.lastTime = 0;
@@ -181,6 +199,7 @@ class Game {
             currentStage.nextPhase();
         }); 
     }
+
 }
 
 document.addEventListener('DOMContentLoaded', () => {

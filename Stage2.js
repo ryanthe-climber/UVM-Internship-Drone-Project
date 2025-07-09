@@ -5,6 +5,7 @@ class Stage2 {
         this.gravity = 9.81; // m/s^2
         this.hoverThrust = null;
         this.phase = 0; // To track the interactive phases
+        this.drone.y = this.game.canvas.height / 4;
 
         this.stagediv = document.createElement("div");
         this.stagediv.setAttribute("id", "Stage2div");
@@ -25,16 +26,17 @@ class Stage2 {
                                                 "In this stage, we will be programming hover thrust. Hover thrust is how much force (in Newtons) must be applied to keep the drone hovering in the air without falling or moving upwards.  Click “Start Hover Thrust” to continue.", 
                                                 "Start Hover Thrust");
                     break;
+
             case 1: this.phase1();
                     break;
 
-            default:this.endStage();
+            default:this.game.endStage("Stage 2 Completed", "Stage 3 - Altitude Control", Stage3, this);
                     break;
         }
     }
 
     phase1() {
-        game.createPhaseDOM(this.stagediv, 
+        this.currentPhaseDiv = game.createPhaseDOM(this.stagediv, 
             "The top arrow represents the hover thrust, and the bottom arrow represents the force of gravity (mass * gravity). These quantities must be equal for the net force to be zero, which means the net acceleration is zero, and the drone hovers.\n\nGiven the variables mass and gravity, write the equation that represents the hover_thrust:	", 
             "hover_thrust = ", 
             this.validateUserCode, 
@@ -60,27 +62,6 @@ class Stage2 {
         this.phase++;
         this.managePhases();
     }
-
-    endStage() {
-        this.gameContent.removeChild(this.stagediv);
-        let completionDiv = document.createElement("div");
-        completionDiv.setAttribute("id", "completionDiv");
-        completionDiv.setAttribute("class", "completionDiv textDiv");
-        completionDiv.appendChild(document.createTextNode("Stage 2 Completed"));
-
-        let nextButton = document.createElement("button");
-        nextButton.setAttribute("class", "nextButton");
-        nextButton.appendChild(document.createTextNode("Stage 3 - Altitude Control"));
-        completionDiv.appendChild(nextButton);
-
-        nextButton.addEventListener('click', () => {
-            this.gameContent.removeChild(completionDiv);
-            this.game.startStage(Stage3);
-        });
-
-        this.gameContent.appendChild(completionDiv);
-    }
-
 
     showForces() {
         this.updateInfoText('The top arrow represents the hover thrust, and the bottom arrow represents the force of gravity (mass * gravity). These quantities must be equal for the net force to be zero, which means the net acceleration is zero, and the drone hovers.');
