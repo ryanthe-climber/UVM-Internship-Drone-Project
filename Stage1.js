@@ -33,14 +33,18 @@ class Stage1 {
     }
 
     phase1() {
-        this.currentPhaseDiv = game.createPhaseDOM(this.stagediv,
+        this.currentPhaseDiv = game.createPhaseDOM(this,
+                            this.stagediv,
                             this.getInitialInfoText(), 
                             "current_height = ", 
                             this.validateUserCode.bind(this), 
                             this.wrongAnswer, 
                             "Hint: Think about the relationship between position and velocity. Use the variables previous_height, velocity, and time.",
                             this.nextPhase.bind(this),
-                            "Enter position equation");  
+                            "Enter position equation",
+                            this.initSim.bind(this),
+                            this.stepSim.bind(this),
+                            this.simComplete.bind(this));  
 
         //other code dependant on phase
     }
@@ -79,29 +83,6 @@ class Stage1 {
         
     }
 
-    update(dt) {
-        // Update logic for Stage 1
-        if (this.codeSubmitted) {
-            this.updatePosition(dt);
-            this.drone.update(dt);
-            this.displayVelocityAndPosition();
-        }
-    }
-
-    draw(ctx) {
-        ctx.clearRect(0, 0, this.game.canvas.width, this.game.canvas.height);
-        this.game.drawBackground();
-        this.game.drawDrone();
-    }
-
-    cleanup() {
-        // Optional: Cleanup logic for Stage 2 if needed
-    }
-
-    
-
-
-
     startMission() {
         /*
         // Show info and input area when mission starts
@@ -119,6 +100,34 @@ class Stage1 {
         <pre>velocity = previous_velocity + acceleration * time</pre>
         <p>Similarly, velocity is the change in position. Using the variables current_height and previous_height, in addition to the ones above, enter the equation for current_height.</p>
         <p><b>ANSWER:</b> previous_height + velocity * time</p>`;
+    }
+
+
+
+
+
+
+
+
+
+
+    update(dt) {
+        // Update logic for Stage 1
+       // if (this.codeSubmitted) {
+            //this.updatePosition(dt);
+            //this.drone.update(dt);
+            //this.displayVelocityAndPosition();
+       // }
+    }
+
+    draw(ctx) {
+        ctx.clearRect(0, 0, this.game.canvas.width, this.game.canvas.height);
+        this.game.drawBackground();
+        this.game.drawDrone();
+    }
+
+    cleanup() {
+        // Optional: Cleanup logic for Stage 2 if needed
     }
 
     updatePosition(dt) {
@@ -161,8 +170,48 @@ class Stage1 {
             <p>Position: (${this.drone.x.toFixed(2)}, ${this.drone.y.toFixed(2)})</p>
         `;
     }
-}
 
+
+    initSim() {
+        //initialize drone and other things
+        this.drone.x = this.game.canvas.width / 2;
+        this.drone.y = this.game.canvas.height / 4;
+
+        this.lastTime = null; 
+    }
+
+    stepSim(time) {
+        //do one step of the simulation
+            if(this.lastTime == null) {
+                this.lastTime = time;
+            }
+            let dt = (time - this.lastTime) / 1000;
+            this.lastTime = time;
+        
+            let previous_height = this.drone.y;
+            let velocity = this.drone.vy;
+            time = dt;
+
+            let position = eval(this.positionUpdateCode.replace('previous_height', previous_height).replace('velocity', velocity).replace('time', time));
+            this.drone.y = position;
+
+            //previous_height + velocity * time
+
+            this.drone.update(dt);
+            this.displayVelocityAndPosition();
+    }
+
+    simComplete() {
+        //check if the simulation is complete and return a boolean
+        return this.drone.crashed;
+    }
+
+    objectiveReached() {
+        //check if the objective was reached after the simulation and return a boolean
+        return this.drone.crashed;
+    }
+
+}
 
 function getMountainHeightAt(x) {
     return this.game.canvas.height - 50; // Use window.game to reference the global game object

@@ -8,7 +8,7 @@ class Game {
         this.currentStage = null;
 
         this.background = new Image();
-        this.background.src = 'pics/mars_background.jpg'; // Ensure this path is correct
+        this.background.src = 'pics/Mars_Landscape_AI.png'; // Ensure this path is correct
         this.background.onload = () => {
             this.run();
             this.startStage(Stage1); // Start with Stage1
@@ -69,6 +69,7 @@ class Game {
         requestAnimationFrame(this.gameLoop.bind(this));
     }
 
+
     run() {
         this.lastTime = 0;
         requestAnimationFrame(this.gameLoop.bind(this));
@@ -101,14 +102,18 @@ class Game {
         this.ctx.restore();
     }
 
-    createPhaseDOM( stagediv/*current stage div*/,
+    createPhaseDOM( currentStage,
+                    stagediv/*current stage div*/,
                     teachingText/*string*/, 
                     submitInstruction/*string*/, 
                     checkAnswerCB/*bool function(String input)*/, 
                     wrongAnswerCB/*string function(String input)*/, 
                     hintText/*String*/,
                     nextPhaseCB/*void function*/,
-                    placeholder/*String*/)
+                    placeholder/*String*/,
+                    initSimCB,
+                    stepSimCB,
+                    simCompleteCB)
     {
         let hintShown = false;
 
@@ -146,7 +151,8 @@ class Game {
         submitButton.appendChild(document.createTextNode("Submit"));
         submitButton.addEventListener('click', () => {
             //check answer
-            let correct = checkAnswerCB(inputBox.value.trim());
+            currentStage.positionUpdateCode = inputBox.value.trim();
+            let correct = checkAnswerCB(currentStage.positionUpdateCode);
             //if wrong, wrong answer function
             if(!correct) {
                 wrongAnswerCB();
@@ -159,12 +165,23 @@ class Game {
                     hintButton.addEventListener('click', () => {
                         alert(hintText);
                     });
-                    
+
                     hintShown = true;
                 }
             } else {
-                //when correct, next phase
-                nextPhaseCB();
+
+                //when correct, start simulation.
+                initSimCB();
+                let simloop = function(time){
+                    stepSimCB(time);
+                    if(!simCompleteCB()) {
+                        requestAnimationFrame(simloop);
+                    } else {
+                        //next phase
+                        nextPhaseCB();
+                    }
+                };
+                requestAnimationFrame(simloop);
             }
         });
         inputDiv.appendChild(document.createTextNode(submitInstruction));
