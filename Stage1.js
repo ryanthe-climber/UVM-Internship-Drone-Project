@@ -4,7 +4,6 @@ class Stage1 {
         this.drone = game.drone;
         this.positionUpdateCode = '';
         this.phase = 0;
-        this.stageEnded = false;
 
         this.stagediv = document.createElement("div");
         this.stagediv.setAttribute("id", "stage1div");
@@ -73,14 +72,7 @@ class Stage1 {
 
     nextPhase() {
         this.phase++;
-        if(this.phase < 2) {
-            this.managePhases();
-        }
-        //specific to stage 1:
-        if(this.phase == 2) {
-            this.codeSubmitted = true;
-        }
-        
+        this.managePhases(); 
     }
 
     startMission() {
