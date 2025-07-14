@@ -54,13 +54,8 @@ class Game {
     }
 
     gameLoop(time) {
-        const dt = (time - this.lastTime) / 1000;
-        this.lastTime = time;
 
         if (this.currentStage) {
-            if (typeof this.currentStage.update === 'function') {
-                this.currentStage.update(dt);
-            }
             if (typeof this.currentStage.draw === 'function') {
                 this.currentStage.draw(this.ctx);
             }
@@ -68,7 +63,6 @@ class Game {
 
         requestAnimationFrame(this.gameLoop.bind(this));
     }
-
 
     run() {
         this.lastTime = 0;

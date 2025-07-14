@@ -75,17 +75,6 @@ class Stage1 {
         this.managePhases(); 
     }
 
-    startMission() {
-        /*
-        // Show info and input area when mission starts
-        this.drone.startMission();
-        const info = document.getElementById('info');
-        info.style.visibility = 'visible';
-        info.innerHTML = this.getInitialInfoText();
-        document.getElementById('inputContainer').style.visibility = 'visible';
-        */
-    }
-
     getInitialInfoText() {
         return `<p>First, let’s first get started with understanding how the drone moves. Right now the drone is in free fall. That means the only force acting on the drone is gravity.</p>
         <p>Acceleration is the change in velocity over time, also known as the derivative (Dv/Dt). So the equation for velocity is:</p>
@@ -94,68 +83,13 @@ class Stage1 {
         <p><b>ANSWER:</b> previous_height + velocity * time</p>`;
     }
 
-
-
-
-
-
-
-
-
-
-    update(dt) {
-        // Update logic for Stage 1
-       // if (this.codeSubmitted) {
-            //this.updatePosition(dt);
-            //this.drone.update(dt);
-            //this.displayVelocityAndPosition();
-       // }
-    }
-
     draw(ctx) {
         ctx.clearRect(0, 0, this.game.canvas.width, this.game.canvas.height);
         this.game.drawBackground();
         this.game.drawDrone();
     }
 
-    cleanup() {
-        // Optional: Cleanup logic for Stage 2 if needed
-    }
-
-    updatePosition(dt) {
-        try {
-            const previous_height = this.drone.y;
-            const velocity = this.drone.vy;
-            const time = dt;
-
-            // Validate and execute user code
-           if (this.validateUserCode(this.positionUpdateCode)) {
-                const position = eval(this.positionUpdateCode.replace('previous_height', previous_height).replace('velocity', velocity).replace('time', time));
-                this.drone.y = position; // Use 'position' instead of 'height'
-
-                // Validate the updated position
-                if (this.drone.y >= getMountainHeightAt(this.drone.x, this.game)) { // Pass this.game as an argument
-                    this.drone.y = getMountainHeightAt(this.drone.x, this.game);
-                    this.drone.vx = 0;
-                    this.drone.vy = 0;
-                    this.drone.crashed = true;
-                    if(!this.stageEnded) {
-                        this.managePhases();
-                    }
-                } else if (this.drone.y < 0) {
-                    throw new Error("Position is below ground level, check your equation.");
-                }
-            } else {
-                throw new Error("Equation does not match reality. Please try again.");
-            }
-        } catch (error) {
-            console.error('Error in user code:', error);
-            alert(error.message);
-        }
-    }
-
-
-    displayVelocityAndPosition() { //change this - ask dad
+    displayVelocityAndPosition() {
         const info = this.displayDiv;
         info.innerHTML = `
             <p>Velocity: ${this.drone.vy.toFixed(2)} m/s</p>
@@ -174,23 +108,23 @@ class Stage1 {
 
     stepSim(time) {
         //do one step of the simulation
-            if(this.lastTime == null) {
-                this.lastTime = time;
-            }
-            let dt = (time - this.lastTime) / 1000;
+        if(this.lastTime == null) {
             this.lastTime = time;
-        
-            let previous_height = this.drone.y;
-            let velocity = this.drone.vy;
-            time = dt;
+        }
+        let dt = (time - this.lastTime) / 1000;
+        this.lastTime = time;
+    
+        let previous_height = this.drone.y;
+        let velocity = this.drone.vy;
+        time = dt;
 
-            let position = eval(this.positionUpdateCode.replace('previous_height', previous_height).replace('velocity', velocity).replace('time', time));
-            this.drone.y = position;
+        let position = eval(this.positionUpdateCode.replace('previous_height', previous_height).replace('velocity', velocity).replace('time', time));
+        this.drone.y = position;
 
-            //previous_height + velocity * time
+        //previous_height + velocity * time
 
-            this.drone.update(dt);
-            this.displayVelocityAndPosition();
+        this.drone.update(dt);
+        this.displayVelocityAndPosition();
     }
 
     simComplete() {

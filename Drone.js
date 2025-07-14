@@ -10,7 +10,6 @@ class Drone {
         this.mass = 1;  // kg
         this.motorStrength = 10;  // max power
         this.automatic = false;
-        this.missionPhase = 0;
         this.crashed = false; // New property to indicate if the drone has crashed
     }
 
@@ -33,10 +32,6 @@ class Drone {
 
         // Update battery, position, and other parameters
         this.battery -= dt * 0.1; // simple battery consumption model
-    }
-
-    startMission() {
-        this.missionPhase = 1; // starting free fall
     }
 
     thrustNeeded() {
