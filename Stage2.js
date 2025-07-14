@@ -49,7 +49,7 @@ class Stage2 {
             this.stepSim.bind(this),
             this.simComplete.bind(this),
             this.objectiveReached.bind(this),
-            this.objectiveNotReached).bind(this);  
+            this.objectiveNotReached.bind(this));  
     }
 
     validateUserCode(code) {
