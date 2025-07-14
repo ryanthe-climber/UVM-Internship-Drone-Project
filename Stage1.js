@@ -121,12 +121,13 @@ class Stage1 {
         let velocity = this.drone.vy;
         time = dt;
 
+        this.drone.update(dt);
         let position = eval(this.positionUpdateCode.replace('previous_height', previous_height).replace('velocity', velocity).replace('time', time));
         this.drone.y = position;
 
         //previous_height + velocity * time
 
-        this.drone.update(dt);
+
         this.displayVelocityAndPosition();
     }
 

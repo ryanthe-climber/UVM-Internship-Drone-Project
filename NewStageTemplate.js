@@ -32,7 +32,8 @@
     }
 
     phase1() {
-        this.currentPhaseDiv = game.createPhaseDOM(this.stagediv,
+        this.currentPhaseDiv = game.createPhaseDOM(this,
+                `           this.stagediv,
                             "Teaching Text", 
                             "Submit Instruction", 
                             this.validateUserCode, 

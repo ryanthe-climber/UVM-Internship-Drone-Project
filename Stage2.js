@@ -36,7 +36,8 @@ class Stage2 {
     }
 
     phase1() {
-        this.currentPhaseDiv = game.createPhaseDOM(this.stagediv, 
+        this.currentPhaseDiv = game.createPhaseDOM(this,
+            this.stagediv, 
             "The top arrow represents the hover thrust, and the bottom arrow represents the force of gravity (mass * gravity). These quantities must be equal for the net force to be zero, which means the net acceleration is zero, and the drone hovers.\n\nGiven the variables mass and gravity, write the equation that represents the hover_thrust:	", 
             "hover_thrust = ", 
             this.validateUserCode, 
@@ -49,8 +50,6 @@ class Stage2 {
             this.simComplete.bind(this),
             this.objectiveReached.bind(this),
             this.objectiveNotReached).bind(this);  
-
-            this.drawForces(this.game.ctx);
     }
 
     validateUserCode(code) {
@@ -73,14 +72,11 @@ class Stage2 {
         this.phase = 1; // Set phase to draw the arrows
     }
 
-    update(dt) {
-        // No dynamic update needed for this stage
-    }
-
     draw(ctx) {
         ctx.clearRect(0, 0, this.game.canvas.width, this.game.canvas.height);
         this.game.drawBackground();
         this.game.drawDrone();
+
         if (this.phase >= 1) {
             this.drawForces(ctx);  // Ensure arrows are drawn during the correct phase
         }

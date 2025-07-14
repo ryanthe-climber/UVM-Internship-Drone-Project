@@ -4,7 +4,11 @@ class Game {
         this.ctx = this.canvas.getContext('2d');
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
-        this.drone = new Drone(this.canvas.width / 2, this.canvas.height / 4);
+
+        this.droneImage = new Image();
+        this.droneImage.src = 'pics/drone.png'; // Ensure this path is correct
+        this.drone = new Drone(this.canvas.width / 2, this.canvas.height / 4, this);
+        
         this.currentStage = null;
 
         this.background = new Image();
@@ -14,8 +18,6 @@ class Game {
             this.startStage(Stage1); // Start with Stage1
         };
 
-        this.droneImage = new Image();
-        this.droneImage.src = 'pics/drone.png'; // Ensure this path is correct
 
         document.getElementById('startButton').addEventListener('click', () => {
             if (this.currentStage) {

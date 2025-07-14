@@ -1,5 +1,7 @@
 class Drone {
-    constructor(x, y) {
+    constructor(x, y, game) {
+        this.game = game;
+        this.max_x = this.game.canvas.width - this.game.droneImage.width;
         this.orig_x = x;
         this.orig_y = y;
         this.reset()
@@ -15,11 +17,25 @@ class Drone {
         this.y += this.vy * dt;
 
         // Check collision with mountains
+
         if (this.y >= getMountainHeightAt(this.x)) { //REWRITE TO CHECK IF DRONE IS OFF SCREEN
             this.y = getMountainHeightAt(this.x);
-            this.vx = 0;
-            this.vy = 0;
-            this.crashed = true;
+            this.crash();
+        }
+    
+        if(this.x > this.max_x) {
+            this.x = this.max_x;
+            this.crash();
+        }
+
+        if(this.x < 0) {
+            this.x = 0;
+            this.crash();
+        }
+        
+        if(this.y < 0) {
+            this.y = 0;
+            this.crash();
         }
 
         // Update battery, position, and other parameters
@@ -28,6 +44,12 @@ class Drone {
 
     thrustNeeded() {
         return this.mass * 9.81; // hover thrust
+    }
+
+    crash() {
+        this.vx = 0;
+        this.vy = 0;
+        this.crashed = true;
     }
 
     reset() {
