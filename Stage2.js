@@ -2,10 +2,10 @@ class Stage2 {
     constructor(game) {
         this.game = game;
         this.drone = game.drone;
+        this.drone.reset();
         this.gravity = 9.81; // m/s^2
         this.hoverThrust = null;
         this.phase = 0; // To track the interactive phases
-        this.drone.y = this.game.canvas.height / 4;
 
         this.stagediv = document.createElement("div");
         this.stagediv.setAttribute("id", "Stage2div");
@@ -43,7 +43,12 @@ class Stage2 {
             this.wrongAnswer, 
             "Hint: The force that the drone exerts must be equal in magnitude to the force pulling downwards to have a net force of 0. Therefore, hover_thrust - mass * gravity = 0.", 
             this.nextPhase.bind(this),
-            "Enter hover thrust equation");  
+            "Enter hover thrust equation", 
+            this.initSim.bind(this),
+            this.stepSim.bind(this),
+            this.simComplete.bind(this),
+            this.objectiveReached.bind(this),
+            this.objectiveNotReached).bind(this);  
 
             this.drawForces(this.game.ctx);
     }
@@ -122,8 +127,32 @@ class Stage2 {
         }
     }
 
-    cleanup() {
-        // Optional: Cleanup logic for Stage 2 if needed
+    initSim() {
+        //initialize drone and other things
+        this.drone.x = this.game.canvas.width / 2;
+        this.drone.y = this.game.canvas.height / 4;
+
+        this.lastTime = null; 
+    }
+
+    stepSim(time) {
+        //do one step of the simulation
+        //no simulation is necessary
+    }
+
+    simComplete() {
+        //check if the simulation is complete and return a boolean
+        return true;
+    }
+
+    objectiveReached() {
+        //check if the objective was reached after the simulation and return a boolean
+        return true;
+    }
+
+    objectiveNotReached() {
+        alert("objective not reached");
+        this.managePhases();
     }
 }
 

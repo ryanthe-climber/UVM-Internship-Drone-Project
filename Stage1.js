@@ -2,6 +2,7 @@ class Stage1 {
     constructor(game) {
         this.game = game;
         this.drone = game.drone;
+        this.drone.reset();
         this.positionUpdateCode = '';
         this.phase = 0;
 
@@ -43,7 +44,9 @@ class Stage1 {
                             "Enter position equation",
                             this.initSim.bind(this),
                             this.stepSim.bind(this),
-                            this.simComplete.bind(this));  
+                            this.simComplete.bind(this),
+                            this.objectiveReached.bind(this),
+                            this.objectiveNotReached.bind(this));  
 
         //other code dependant on phase
     }
@@ -135,6 +138,13 @@ class Stage1 {
     objectiveReached() {
         //check if the objective was reached after the simulation and return a boolean
         return this.drone.crashed;
+    }
+
+    objectiveNotReached() {
+        alert("objective not reached");
+        this.stagediv.removeChild(this.displayDiv);
+        this.drone.reset();
+        this.managePhases();
     }
 
 }

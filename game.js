@@ -107,7 +107,9 @@ class Game {
                     placeholder/*String*/,
                     initSimCB,
                     stepSimCB,
-                    simCompleteCB)
+                    simCompleteCB,
+                    objectiveReachedCB,
+                    objectiveNotReachedCB)
     {
         let hintShown = false;
 
@@ -172,7 +174,11 @@ class Game {
                         requestAnimationFrame(simloop);
                     } else {
                         //next phase
-                        nextPhaseCB();
+                        if(objectiveReachedCB()) {
+                            nextPhaseCB();
+                        } else {
+                            objectiveNotReachedCB();
+                        }
                     }
                 };
                 requestAnimationFrame(simloop);
