@@ -393,6 +393,15 @@
             position: relative;
         }
 
+        .batteryElement {
+            background-color: green;
+            margin: 20px;
+            padding: 10px;
+            border: 1px solid #000000;
+            border-radius: 10px;
+            opacity: 85%;
+        }
+
 
         
     </style>
@@ -401,7 +410,7 @@
     <canvas id="gameCanvas"></canvas>
     <button id="startButton">Start Mission</button>
     <button id="startHoverThrustButton" style="visibility: hidden;">Start Hover Thrust</button>
-    <div id="info">Press 'Start Mission' to begin.</div>
+    <div id="info" style="visibility: hidden;">Press 'Start Mission' to begin.</div>
     
     <div class="hamburger-menu">
     <div class="hamburger-icon">&#9776;</div>
@@ -430,6 +439,7 @@
     <!-- Stages -->
     <div id="gameContent">
     </div>
+
 
 		<!-- Stage 3 Input -->
 		<div id="heightInputContainer" style="visibility: hidden;">

@@ -8,7 +8,7 @@ class Game {
         this.droneImage = new Image();
         this.droneImage.src = 'pics/drone.png'; // Ensure this path is correct
         this.drone = new Drone(this.canvas.width / 2, this.canvas.height / 4, this);
-        
+
         this.currentStage = null;
 
         this.background = new Image();
@@ -96,6 +96,13 @@ class Game {
         this.ctx.rotate(this.drone.angle);
         this.ctx.drawImage(this.droneImage, -20, -20, 80, 80); // Adjust size and position as needed
         this.ctx.restore();
+    }
+
+    clearScreen() {
+        let gameContent = document.getElementById('gameContent');
+        while (gameContent.firstChild) {
+            gameContent.removeChild(gameContent.firstChild);
+        }
     }
 
     createPhaseDOM( currentStage,

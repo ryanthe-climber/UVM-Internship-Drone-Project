@@ -1,5 +1,4 @@
-/*class NewStageTemplate {
-    constructor(game) {
+    /*constructor(game) {
         this.game = game;
         this.drone = game.drone;
         this.drone.reset();
@@ -118,7 +117,6 @@
         alert("objective not reached");
         this.managePhases();
     }
-}
 
 // Assign Stage to the global window object
 */
