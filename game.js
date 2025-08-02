@@ -128,11 +128,11 @@ class Game {
             if(currentStage.step < stepArray.length) {
                 stepArray[currentStage.step][0](stepArray[currentStage.step][1], currentStage, phaseDiv, stepArray, stageDiv, currentStage.game.doNextPhaseStep);
             } else {
-                throw new Error("Need to end the phase");
-                //endPhase method //FIXME
+                //if the step is done, then we can move to the next phase
+                currentStage.nextPhase();
             }
         } else {
-            stepArray[currentStage.step][3](currentStage, phaseDiv, stepArray[currentStage.step][5]);
+            stepArray[currentStage.step][3](currentStage, phaseDiv, stepArray[currentStage.step][4]);
         }
     }
 

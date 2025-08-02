@@ -38,28 +38,35 @@ class Stage1 {
         return true;
     }
 
-    blankCB() {
-        return;
-    }
 
+    simulationCode(cbArray, currentStage, phaseDiv, stepArray, stageDiv, nextStep) {
+        //cbArray = [initSimCB, stepSimCB, simCompleteCB, objectiveReachedCB, objectiveNotReachedCB, displayCB];
+        //              0         1            2                3                  4                    5
+        //this is the code that will be run in the simulation
 
-    simulationCode() {
-        //when correct, start simulation.
-                initSimCB();
-                let simloop = function(time){
-                    stepSimCB(time);
-                    if(!simCompleteCB()) {
-                        requestAnimationFrame(simloop);
-                    } else {
-                        //next phase
-                        if(objectiveReachedCB()) {
-                            nextPhaseCB();
-                        } else {
-                            objectiveNotReachedCB();
-                        }
-                    }
-                };
-                requestAnimationFrame(simloop);
+        phaseDiv.style.visibility = "hidden";
+
+        let displayDiv = document.createElement("div");
+        displayDiv.setAttribute("id", "displayDiv");
+        displayDiv.setAttribute("class", "displayDiv textDiv");
+
+        stageDiv.appendChild(displayDiv);
+
+        cbArray[0](); //initSimCB
+        
+        let simloop = function(time){
+            cbArray[1](time); //stepSimCB
+            cbArray[5](displayDiv); //displayCB
+
+            if(!cbArray[2]()) { //simCompleteCB
+                //if simulation is not complete, continue simulating
+                requestAnimationFrame(simloop); 
+            } else {
+                //simulation is complete
+                nextStep(currentStage, phaseDiv, stepArray, stageDiv);
+            }
+        };
+        requestAnimationFrame(simloop);
     }
 
 
@@ -97,6 +104,15 @@ class Stage1 {
         stagediv.appendChild(phaseDiv);
     }
 
+    inputDone(cbArray, currentStage) {
+        //[CheckAnswer, wrongAnswer]
+        let correct = cbArray[0](currentStage.positionUpdateCode);
+        if(!correct) {
+            cbArray[1]();
+        }
+        return correct;
+    }
+
     hint(currentStage, phaseDiv, hintText) {
         let hintButtonDiv = document.createElement("div");
         hintButtonDiv.setAttribute("id", "hintButtonDiv");
@@ -117,14 +133,6 @@ class Stage1 {
         phaseDiv.appendChild(hintButtonDiv);
     }
 
-    inputDone(cbArray, currentStage) {
-        //[CheckAnswer, wrongAnswer]
-        let correct = cbArray[0](currentStage.positionUpdateCode);
-        if(!correct) {
-            cbArray[1]();
-        }
-        return correct;
-    }
 
 
     phase1() {
@@ -139,8 +147,24 @@ class Stage1 {
                                         ["current_height = ", "Enter position equation", "Submit"],
                                         this.inputDone.bind(this), 
                                         this.hint, 
-                                        "hint", 
+                                        "Hint: Think about the relationship between position and velocity. Use the variables previous_height, velocity, and time.", 
                                         [this.validateUserCode, this.wrongAnswer]
+                                    ],
+                        /*Simulation Step*/
+                                    [
+                                        this.simulationCode.bind(this), 
+                                        [
+                                            this.initSim.bind(this), 
+                                            this.stepSim.bind(this), 
+                                            this.simComplete.bind(this), 
+                                            this.objectiveReached.bind(this), 
+                                            this.objectiveNotReached.bind(this), 
+                                            this.displayVelocityAndPosition.bind(this)
+                                        ],
+                                        this.objectiveReached.bind(this),
+                                        null,
+                                        null,
+                                        null
                                     ]
                     ]);
 
@@ -166,16 +190,6 @@ class Stage1 {
         // Basic validation to check if the code follows the expected pattern
         const expectedPattern = /previous_height\s*\+\s*velocity\s*\*\s*time/i;
         let correct = expectedPattern.test(code);
-        /*if(correct) {
-            this.positionUpdateCode = code;
-
-            this.stagediv.removeChild(this.currentPhaseDiv);
-
-            this.displayDiv = document.createElement("div");
-            this.displayDiv.setAttribute("id", "displayDiv");
-            this.displayDiv.setAttribute("class", "displayDiv textDiv");
-            this.stagediv.appendChild(this.displayDiv);
-        }*/ //FIXME - Should this code be here or in nextPhase?
         return correct;
     }
 
@@ -206,9 +220,8 @@ class Stage1 {
         this.game.drawDrone();
     }
 
-    displayVelocityAndPosition() {
-        const info = this.displayDiv;
-        info.innerHTML = `
+    displayVelocityAndPosition(displayDiv) {
+        displayDiv.innerHTML = `
             <p>Velocity: ${this.drone.vy.toFixed(2)} m/s</p>
             <p>Position: (${this.drone.x.toFixed(2)}, ${this.drone.y.toFixed(2)})</p>
         `;
@@ -240,9 +253,6 @@ class Stage1 {
         this.drone.y = position;
 
         //previous_height + velocity * time
-
-
-        this.displayVelocityAndPosition();
     }
 
     simComplete() {
@@ -250,7 +260,7 @@ class Stage1 {
         return this.drone.crashed;
     }
 
-    objectiveReached() {
+    objectiveReached(cbArray, currentStage) {
         //check if the objective was reached after the simulation and return a boolean
         return this.drone.crashed;
     }
