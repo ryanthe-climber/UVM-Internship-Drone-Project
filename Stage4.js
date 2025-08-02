@@ -1,10 +1,12 @@
 class Stage4 {
+
         constructor(game) {
         this.game = game;
         this.drone = game.drone;
         this.drone.reset();
         this.battery = 100;
         this.powerConstant = 5; // Example power constant
+        this.phase = 0;
 
         this.stagediv = document.createElement("div");
         this.stagediv.setAttribute("id", "Stage4Div");
@@ -30,7 +32,7 @@ class Stage4 {
             case 1: this.phase1();
                     break;
 
-            default:this.game.endStage(message, nextText, nextStage, currentStage);
+            default:this.game.endStage("message", "nextText", Stage5, this);
                     break;
         }
     }
@@ -40,23 +42,23 @@ class Stage4 {
                             this.stagediv,
                             "Teaching Text", 
                             "Submit Instruction", 
-                            this.validateUserCode, 
+                            this.validateUserCode.bind(this), 
                             this.wrongAnswer, 
                             "Hint",
                             this.nextPhase.bind(this),
                             "Input Place Holder",
-                            initSimCB,
-                            stepSimCB,
-                            simCompleteCB,
-                            objectiveReachedCB,
-                            objectiveNotReachedCB);  
+                            this.initSim.bind(this),
+                            this.stepSim.bind(this),
+                            this.simComplete.bind(this),
+                            this.objectiveReached.bind(this),
+                            this.objectiveNotReached.bind(this));  
 
         //other code dependant on phase
     }
 
     validateUserCode(thrustInput) {
         //check input
-        const thrust = parseFloat(thrustInput.value);
+        const thrust = parseFloat(thrustInput);
             if (!isNaN(thrust)) {
                 const power = this.powerConstant * thrust;
                 const energy = power * 1; // Assuming t = 1 for simplicity
@@ -97,34 +99,23 @@ class Stage4 {
 
     stepSim(time) {
         //do one step of the simulation
-        if(this.lastTime == null) {
-            this.lastTime = time;
-        }
-        let dt = (time - this.lastTime) / 1000;
-        this.lastTime = time;
-    
-        let previous_height = this.drone.y;
-        let velocity = this.drone.vy;
-        time = dt;
-
-        let position = eval(this.positionUpdateCode.replace('previous_height', previous_height).replace('velocity', velocity).replace('time', time));
-        this.drone.y = position;
-
-        //previous_height + velocity * time
-
-        this.drone.update(dt);
-        this.displayVelocityAndPosition();
+        this.battery -= 0.3;
         this.updateBatteryDisplay();
     }
 
     simComplete() {
         //check if the simulation is complete and return a boolean
-        return this.drone.crashed;
+        if(this.battery < 1) {
+            alert("Battery has run out!")
+            return true;
+        } else {
+            return false;
+        }
     }
 
     objectiveReached() {
         //check if the objective was reached after the simulation and return a boolean
-        return this.drone.crashed;
+        return true;
     }
 
     objectiveNotReached() {
@@ -135,10 +126,9 @@ class Stage4 {
 
 
     updateBatteryDisplay() {
-        const batteryElement = document.getElementById('batteryDisplay');
-        if (batteryElement) {
-            batteryElement.style.width = `${this.battery}%`;
-            batteryElement.style.backgroundColor = `rgb(${(100 - this.battery) * 2.55}, ${this.battery * 2.55}, 0)`;
+        if (this.batteryElement) {
+            this.batteryElement.style.width = `${this.battery}%`;
+            this.batteryElement.style.backgroundColor = `rgb(${(100 - this.battery) * 2.55}, ${this.battery * 2.55}, 0)`;
         }
     }
 

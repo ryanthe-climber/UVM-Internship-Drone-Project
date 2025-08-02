@@ -105,6 +105,56 @@ class Game {
         }
     }
 
+    createPhaseTeaching(infoText, currentStage, phaseDiv, stepArray, stagediv, nextStep) {
+        let teachDiv = document.createElement("div");
+        teachDiv.setAttribute("id", "teachDiv");
+        teachDiv.setAttribute("class", "teachDiv textDiv");
+
+        let teachText = document.createElement("p");
+        teachText.innerHTML = infoText;
+
+        teachDiv.appendChild(teachText);
+        phaseDiv.appendChild(teachDiv);
+
+        stagediv.appendChild(phaseDiv);
+
+        nextStep(currentStage, phaseDiv, stepArray, stagediv);
+
+    }
+
+    doNextPhaseStep(currentStage, phaseDiv, stepArray, stageDiv) {
+        if(stepArray[currentStage.step][2](stepArray[currentStage.step][5], currentStage)) {
+            currentStage.step++;
+            if(currentStage.step < stepArray.length) {
+                stepArray[currentStage.step][0](stepArray[currentStage.step][1], currentStage, phaseDiv, stepArray, stageDiv, currentStage.game.doNextPhaseStep);
+            } else {
+                throw new Error("Need to end the phase");
+                //endPhase method //FIXME
+            }
+        } else {
+            stepArray[currentStage.step][3](currentStage, phaseDiv, stepArray[currentStage.step][5]);
+        }
+    }
+
+    createPhaseDom2(currentStage,
+                    stagediv,
+                    stepArray) {
+                    //the step array will include more arrays that contain the following:
+                    //doSomethingCallback, "dataBlob", stepFinishedCallback, hintCallback, "HintData", stepFinishedData
+                    //      0                   1                  2                3           4           5
+        let phaseDiv = document.createElement("div");
+        phaseDiv.setAttribute("id", "phaseDiv");
+        phaseDiv.setAttribute("class", "phaseDiv");
+
+
+        //here, the parameters will always be dataBlob, currentStage, phaseDiv, stepArray, stageDiv, nextStep
+        
+        stepArray[currentStage.step][0](stepArray[currentStage.step][1], currentStage, phaseDiv, stepArray, stagediv, this.doNextPhaseStep);
+
+
+        return phaseDiv;
+    }
+
     createPhaseDOM( currentStage,
                     stagediv/*current stage div*/,
                     teachingText/*string*/, 
