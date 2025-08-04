@@ -16,11 +16,7 @@ class Stage1 {
         gameContent.appendChild(this.stagediv);
         this.managePhases();
     }
-     
-    start() {
-        return;
-    }
-
+    
     managePhases() {
         switch(this.phase) {
             case 0: game.stageExplainationDOM(this, this.stagediv, 'Stage 1 - Free Fall', "Start Mission");
@@ -34,17 +30,12 @@ class Stage1 {
         }
     }
 
-    teachingDoneCB() {
-        return true;
-    }
-
-
     simulationCode(cbArray, currentStage, phaseDiv, stepArray, stageDiv, nextStep) {
         //cbArray = [initSimCB, stepSimCB, simCompleteCB, objectiveReachedCB, objectiveNotReachedCB, displayCB];
         //              0         1            2                3                  4                    5
         //this is the code that will be run in the simulation
 
-        phaseDiv.style.visibility = "hidden";
+        stageDiv.removeChild(phaseDiv);
 
         let displayDiv = document.createElement("div");
         displayDiv.setAttribute("id", "displayDiv");
@@ -69,84 +60,18 @@ class Stage1 {
         requestAnimationFrame(simloop);
     }
 
-
-    input(dataArray, currentStage, phaseDiv, stepArray, stagediv, nextStep) {
-             //[prompt, placeHolder, Button]
-             //   0         1          2   
-
-        let inputDiv = document.createElement("div");
-        inputDiv.setAttribute("id", "inputDiv");
-        inputDiv.setAttribute("class", "inputDiv textDiv");
-
-        inputDiv.appendChild(document.createTextNode(dataArray[0]));
-
-        let inputBox = document.createElement("input");
-        inputBox.setAttribute("id", "inputBox");
-        inputBox.setAttribute("type", "text"); 
-        inputBox.setAttribute("placeholder", dataArray[1]);
-
-        //button to submit input
-        let submitButton = document.createElement("button");
-        submitButton.setAttribute("class", "submitButton");
-        submitButton.appendChild(document.createTextNode(dataArray[2]));
-
-        submitButton.addEventListener('click', () => {
-            //check answer
-            currentStage.positionUpdateCode = inputBox.value.trim();
-            nextStep(currentStage, phaseDiv, stepArray, stagediv);
-        });
-
-        inputDiv.appendChild(inputBox);
-        inputDiv.appendChild(submitButton);
-
-        phaseDiv.appendChild(inputDiv);
-
-        stagediv.appendChild(phaseDiv);
-    }
-
-    inputDone(cbArray, currentStage) {
-        //[CheckAnswer, wrongAnswer]
-        let correct = cbArray[0](currentStage.positionUpdateCode);
-        if(!correct) {
-            cbArray[1]();
-        }
-        return correct;
-    }
-
-    hint(currentStage, phaseDiv, hintText) {
-        let hintButtonDiv = document.createElement("div");
-        hintButtonDiv.setAttribute("id", "hintButtonDiv");
-        hintButtonDiv.setAttribute("class", "hintButtonDiv");
-
-        if(!currentStage.hintShown) {
-                    let hintButton = document.createElement("button");
-                    hintButton.appendChild(document.createTextNode("Hint"));
-                    hintButtonDiv.appendChild(hintButton);
-
-                    hintButton.addEventListener('click', () => {
-                         alert(hintText); //FIXME - maybe make the hint show up in a div?
-                    });
-
-                    currentStage.hintShown = true;
-        }
-
-        phaseDiv.appendChild(hintButtonDiv);
-    }
-
-
-
     phase1() {
         this.currentPhaseDiv = this.game.createPhaseDom2(this,
                     this.stagediv,
                     [
-                        /*Teaching Step*/[this.game.createPhaseTeaching, this.getInitialInfoText(), this.teachingDoneCB, null, null],
+                        /*Teaching Step*/[this.game.createPhaseTeaching, this.getInitialInfoText(), () => true, null, null],
 
                         /*Input Step*/
                                     [   
-                                        this.input,
+                                        this.game.input,
                                         ["current_height = ", "Enter position equation", "Submit"],
-                                        this.inputDone.bind(this), 
-                                        this.hint, 
+                                        this.game.inputDone, 
+                                        this.game.hint, 
                                         "Hint: Think about the relationship between position and velocity. Use the variables previous_height, velocity, and time.", 
                                         [this.validateUserCode, this.wrongAnswer]
                                     ],
@@ -167,23 +92,6 @@ class Stage1 {
                                         null
                                     ]
                     ]);
-
-        /*this.currentPhaseDiv = game.createPhaseDOM(this,
-                            this.stagediv,
-                            this.getInitialInfoText(), 
-                            "current_height = ", 
-                            this.validateUserCode.bind(this), 
-                            this.wrongAnswer, 
-                            "Hint: Think about the relationship between position and velocity. Use the variables previous_height, velocity, and time.",
-                            this.nextPhase.bind(this),
-                            "Enter position equation",
-                            this.initSim.bind(this),
-                            this.stepSim.bind(this),
-                            this.simComplete.bind(this),
-                            this.objectiveReached.bind(this),
-                            this.objectiveNotReached.bind(this));  */ 
-
-        //other code dependant on phase
     }
 
     validateUserCode(code) {
@@ -200,9 +108,6 @@ class Stage1 {
 
     nextPhase() {
         this.phase++;
-        if(this.currentPhaseDiv) {
-            this.stagediv.removeChild(this.currentPhaseDiv); //FIXME - doesn't work because if call this after the stage explanation and tries to remove nothing
-        }
         this.managePhases(); 
     }
 
@@ -226,7 +131,6 @@ class Stage1 {
             <p>Position: (${this.drone.x.toFixed(2)}, ${this.drone.y.toFixed(2)})</p>
         `;
     }
-
 
     initSim() {
         //initialize drone and other things
@@ -271,7 +175,6 @@ class Stage1 {
         this.drone.reset();
         this.managePhases();
     }
-
 }
 
 function getMountainHeightAt(x) {
