@@ -56,23 +56,6 @@ class Stage2 {
                                         [this.validateUserCode, this.wrongAnswer]
                                     ]
                     ]);
-
-
-
-        /*this.currentPhaseDiv = game.createPhaseDOM(this,
-            this.stagediv, 
-            "The top arrow represents the hover thrust, and the bottom arrow represents the force of gravity (mass * gravity). These quantities must be equal for the net force to be zero, which means the net acceleration is zero, and the drone hovers.\n\nGiven the variables mass and gravity, write the equation that represents the hover_thrust:	", 
-            "hover_thrust = ", 
-            this.validateUserCode, 
-            this.wrongAnswer, 
-            "Hint: The force that the drone exerts must be equal in magnitude to the force pulling downwards to have a net force of 0. Therefore, hover_thrust - mass * gravity = 0.", 
-            this.nextPhase.bind(this),
-            "Enter hover thrust equation", 
-            this.initSim.bind(this),
-            this.stepSim.bind(this),
-            this.simComplete.bind(this),
-            this.objectiveReached.bind(this),
-            this.objectiveNotReached.bind(this));  */
     }
 
     validateUserCode(code) {
