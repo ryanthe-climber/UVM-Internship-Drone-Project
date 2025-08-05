@@ -2,6 +2,7 @@ class Stage3 {
     constructor(game) {
         this.game = game;
         this.drone = game.drone;
+        this.drone.reset();
         this.gravity = 9.81; // m/s^2
         this.desiredHeight = null;
         this.currentHeight = this.game.canvas.height - this.drone.y;
@@ -32,8 +33,14 @@ class Stage3 {
                     break;
             case 1: this.phase1();
                     break;
+            
+            case 2: this.phase2();
+                    break;
 
-            default:this.game.endStage(message, nextText, nextStage, currentStage);
+            case 3: this.phase3();
+                    break;
+
+            default:this.game.endStage("message", "nextText", Stage4, this);
                     break;
         }
     }
@@ -44,17 +51,50 @@ class Stage3 {
 
                     [
                         /*Teaching Step*/[
-                                            this.game.createPhaseTeaching,
+                                            this.teachingLineClick,
                                             "Click on the dotted red line to set the desired altitude, and the drone will adjust its thrust accordingly.", 
-                                            () => true, null, null
+                                            () => true,
+                                             null, null
                                         ],
+                        /*Error Input Step*/ []
                     ]);
     }
+    
+    phase2() {
+        this.currentPhaseDiv = this.game.createPhaseDom2(
+            this,
+            this.stagediv,
+
+            [
+                /*Thrust Input Step*/[
+                                    this.teachingLineClick,
+                                    "Click on the dotted red line to set the desired altitude, and the drone will adjust its thrust accordingly.", 
+                                    () => true,
+                                    null, null
+                                ],
+                /*Simulation Step (oscillation)*/ []
+            ]);
+    }
+
+    phase3() {
+        this.currentPhaseDiv = this.game.createPhaseDom2(
+            this,
+            this.stagediv,
+
+            [
+                /*Derivative Input Step*/[
+                                    this.teachingLineClick,
+                                    "Click on the dotted red line to set the desired altitude, and the drone will adjust its thrust accordingly.", 
+                                    () => true,
+                                    null, null
+                                ],
+                /*Simulation Step (stable)*/ []
+            ]);
+    }
+
 
     teachingLineClick(infoText, currentStage, phaseDiv, stepArray, stagediv, nextStep) {
         //Click on the dotted red line to set the desired altitude, then click "Submit Height" to continue.
-
-        this.game.canvas.addEventListener('click', (event) => this.handleCanvasClick(event));
 
         let teachDiv = document.createElement("div");
         teachDiv.setAttribute("id", "teachDiv");
@@ -71,12 +111,21 @@ class Stage3 {
         lockButton.setAttribute('class', 'submitButton');
         teachDiv.appendChild(lockButton);
 
+        let handleCanvasClickGlue = function (event) {
+            currentStage.handleCanvasClick(event, lockButton);
+        }
+
         phaseDiv.appendChild(teachDiv);
 
         stagediv.appendChild(phaseDiv);
 
-        nextStep(currentStage, phaseDiv, stepArray, stagediv);
+         currentStage.game.canvas.addEventListener('click', handleCanvasClickGlue);
 
+
+        lockButton.addEventListener('click', () => {
+            nextStep(currentStage, phaseDiv, stepArray, stagediv);
+            currentStage.game.canvas.removeEventListener('click', handleCanvasClickGlue);
+        });
     }
 
 
@@ -175,7 +224,7 @@ class Stage3 {
         this.updateInfoText('In this stage, you will control the drone’s altitude. Click on the dotted red line to set the desired altitude, and the drone will adjust its thrust accordingly.');
     }
 
-    handleCanvasClick(event) {
+    handleCanvasClick(event, lockButton) {
         const rect = this.game.canvas.getBoundingClientRect();
         const x = event.clientX - rect.left;
         const y = event.clientY - rect.top;
@@ -184,6 +233,7 @@ class Stage3 {
         // If the user clicks near the drone's center, set the desired height
         if (Math.abs(x - droneCenterX) < 10) {
             this.desiredHeight = y;
+            lockButton.disabled = false; // Enable the button after setting the height
         }
     }
 
@@ -342,7 +392,7 @@ class Stage3 {
 
         this.drawDottedLine(ctx, this.drone.x, 0, this.drone.x, this.game.canvas.height);
 
-        if (this.phase >= 1) {
+        if (this.phase >= 1 && this.desiredHeight !== null) {
             ctx.fillStyle = 'red';
             ctx.fillText('X', this.drone.x, this.desiredHeight);
             ctx.fillText('Desired Height', this.drone.x + 10, this.desiredHeight - 10);

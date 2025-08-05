@@ -6,8 +6,7 @@ class Stage1 {
         this.positionUpdateCode = '';
         this.phase = 0;
         this.step = 0;
-        this.hintShown = false;
-
+        
         this.stagediv = document.createElement("div");
         this.stagediv.setAttribute("id", "stage1div");
         this.stagediv.setAttribute("class", "stageDiv");
