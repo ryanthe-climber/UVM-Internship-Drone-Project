@@ -11,7 +11,7 @@ class Stage3 {
         this.oscillationTime = 0;
         this.constant = 0; // Coefficient for error
         this.derivativeConstant = 0; // Coefficient for derivative
-        this.positionUpdateCode = '';
+        this.positionUpdateCode = null;
 
         this.stagediv = document.createElement("div");
         this.stagediv.setAttribute("id", "Stage3Div");
@@ -76,19 +76,34 @@ class Stage3 {
             this.stagediv,
 
             [
-                /*Teaching Step*/[
-                                    this.game.createPhaseTeaching,
-                                    "Set the thrust using: (any number) * error + hover_thrust. Enter your thrust equation below.", 
-                                    () => true,
-                                    null, null, null
-                                ],
-                /*Thrust Input Step*/[
-                                    this.game.input,
-                                    ["Enter Thrust Equation (e.g., Kp * error + hover_thrust):", "Enter Thrust Equation", "Submit Thrust Equation"], 
-                                    () => true,
-                                    null, null
-                                ],
-                /*Simulation Step (oscillation)*/ []
+                /*Teaching Step*/
+                [
+                    this.game.createPhaseTeaching,
+                    "Set the thrust using: (any number) * error + hover_thrust. Enter your thrust equation below.", 
+                    () => true,
+                    null, null, null
+                ],
+                /*Thrust Input Step*/
+                [
+                    this.game.input,
+                    ["Enter Thrust Equation (e.g., Kp * error + hover_thrust): ", "Enter Thrust Equation", "Submit Thrust Equation"], 
+                    () => true,
+                    null, null
+                ],
+                /*Simulation Step (oscillation)*/ 
+                [
+                    this.game.simulateDrone,
+                    [
+                        this.initOscillationSim.bind(this), 
+                        this.stepOscillationSim.bind(this), 
+                        this.OscillationSimComplete.bind(this), 
+                    ],
+                    this.objectiveReached.bind(this),
+                    null,
+                    null,
+                    null
+
+                ]
             ]);
     }
 
@@ -154,8 +169,6 @@ class Stage3 {
         }
         this.managePhases();
     }
-
-
 
 
     handleCanvasClick(event, lockButton) {
@@ -489,6 +502,66 @@ class Stage3 {
             alert('Stage 4 will be loaded here.');
         });
     }
+
+
+
+    initOscillationSim() {
+        
+    }
+
+    stepOscillationSim(time) {
+        //do one step of the simulation
+        if(this.lastTime == null) {
+            this.lastTime = time;
+        }
+        let dt = (time - this.lastTime) / 1000;
+        this.lastTime = time;
+    
+        let previous_height = this.drone.y;
+        let velocity = this.drone.vy;
+        time = dt;
+
+        if (this.desired_height !== null) {
+            const error = this.desired_height - this.drone.y; // Calculate the error
+            const hoverThrust = this.drone.mass * this.gravity; // Calculate hover thrust
+
+            // Evaluate the user-entered thrust equation
+            let thrust;
+            try {
+                thrust = eval(this.proportionalEquation.replace(/error/g, error).replace(/hover_thrust/g, hoverThrust));
+            } catch (e) {
+                this.showError('There was an error in your thrust equation.');
+                return;
+            }
+
+            // Damped oscillation calculation
+            const dampingFactor = 0.1; // Adjust this value for desired damping
+            const dampingThrust = thrust * (1 - dampingFactor); // Apply damping to the thrust
+
+            // Simulate oscillation with damping
+            this.drone.vy += (dampingThrust / this.drone.mass - this.gravity) * dt; // Update vertical velocity
+            this.drone.y += this.drone.vy * dt; // Update position
+
+            // Draw the current forces acting on the drone
+            this.drawForces(thrust, error);
+        }
+
+        //v(t) = v(t-dt) + (f/m)*dt
+
+        this.drone.update(dt);
+        let position = eval(this.positionUpdateCode.replace('previous_height', previous_height).replace('velocity', velocity).replace('time', time));
+        this.drone.y = position;
+
+        this.displayVelocityAndPosition();
+
+        //previous_height + velocity * time
+    }
+
+    OscillationSimComplete() {
+
+    }
+
+
 }
 
 // Assign Stage3 to the global window object

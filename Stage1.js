@@ -6,7 +6,7 @@ class Stage1 {
         this.positionUpdateCode = '';
         this.phase = 0;
         this.step = 0;
-        
+
         this.stagediv = document.createElement("div");
         this.stagediv.setAttribute("id", "stage1div");
         this.stagediv.setAttribute("class", "stageDiv");
@@ -29,36 +29,6 @@ class Stage1 {
         }
     }
 
-    simulationCode(cbArray, currentStage, phaseDiv, stepArray, stageDiv, nextStep) {
-        //cbArray = [initSimCB, stepSimCB, simCompleteCB, objectiveReachedCB, objectiveNotReachedCB, displayCB];
-        //              0         1            2                3                  4                    5
-        //this is the code that will be run in the simulation
-
-        stageDiv.removeChild(phaseDiv);
-
-        let displayDiv = document.createElement("div");
-        displayDiv.setAttribute("id", "displayDiv");
-        displayDiv.setAttribute("class", "displayDiv textDiv");
-
-        stageDiv.appendChild(displayDiv);
-
-        cbArray[0](); //initSimCB
-        
-        let simloop = function(time){
-            cbArray[1](time); //stepSimCB
-            cbArray[5](displayDiv); //displayCB
-
-            if(!cbArray[2]()) { //simCompleteCB
-                //if simulation is not complete, continue simulating
-                requestAnimationFrame(simloop); 
-            } else {
-                //simulation is complete
-                nextStep(currentStage, phaseDiv, stepArray, stageDiv);
-            }
-        };
-        requestAnimationFrame(simloop);
-    }
-
     phase1() {
         this.currentPhaseDiv = this.game.createPhaseDom2(this,
                     this.stagediv,
@@ -76,14 +46,11 @@ class Stage1 {
                                     ],
                         /*Simulation Step*/
                                     [
-                                        this.simulationCode.bind(this), 
+                                        this.game.simulateDrone, 
                                         [
                                             this.initSim.bind(this), 
                                             this.stepSim.bind(this), 
                                             this.simComplete.bind(this), 
-                                            this.objectiveReached.bind(this), 
-                                            this.objectiveNotReached.bind(this), 
-                                            this.displayVelocityAndPosition.bind(this)
                                         ],
                                         this.objectiveReached.bind(this),
                                         null,
@@ -124,8 +91,8 @@ class Stage1 {
         this.game.drawDrone();
     }
 
-    displayVelocityAndPosition(displayDiv) {
-        displayDiv.innerHTML = `
+    displayVelocityAndPosition() {
+        this.displayDiv.innerHTML = `
             <p>Velocity: ${this.drone.vy.toFixed(2)} m/s</p>
             <p>Position: (${this.drone.x.toFixed(2)}, ${this.drone.y.toFixed(2)})</p>
         `;
@@ -133,6 +100,16 @@ class Stage1 {
 
     initSim() {
         //initialize drone and other things
+        let stageDiv = this.stagediv;
+
+        stageDiv.removeChild(this.currentPhaseDiv);
+
+        this.displayDiv = document.createElement("div");
+        this.displayDiv.setAttribute("id", "displayDiv");
+        this.displayDiv.setAttribute("class", "displayDiv textDiv");
+
+        stageDiv.appendChild(this.displayDiv); 
+
         this.drone.x = this.game.canvas.width / 2;
         this.drone.y = this.game.canvas.height / 4;
 
@@ -154,6 +131,8 @@ class Stage1 {
         this.drone.update(dt);
         let position = eval(this.positionUpdateCode.replace('previous_height', previous_height).replace('velocity', velocity).replace('time', time));
         this.drone.y = position;
+
+        this.displayVelocityAndPosition();
 
         //previous_height + velocity * time
     }

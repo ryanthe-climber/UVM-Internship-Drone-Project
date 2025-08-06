@@ -119,6 +119,32 @@ class Game {
 
     }
 
+    simulateDrone(cbArray, currentStage, phaseDiv, stepArray, stageDiv, nextStep) { //FIXME - Maybe make this a Game.js function
+        //cbArray = [initSimCB, stepSimCB, simCompleteCB];
+        //              0         1            2                           
+        //this is the code that will be run in the simulation
+
+        cbArray[0](); //initSimCB
+        
+        let simloop = function(time){
+            cbArray[1](time); //stepSimCB
+            
+
+            if(!cbArray[2]()) { //simCompleteCB
+                //if simulation is not complete, continue simulating
+                requestAnimationFrame(simloop); 
+            } else {
+                //simulation is complete
+                nextStep(currentStage, phaseDiv, stepArray, stageDiv);
+            }
+        };
+        requestAnimationFrame(simloop);
+    }
+
+
+
+
+    
     input(dataArray, currentStage, phaseDiv, stepArray, stagediv, nextStep) {
              //[prompt, placeHolder, Button]
              //   0         1          2   
