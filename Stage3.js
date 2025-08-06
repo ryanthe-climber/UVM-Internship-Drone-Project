@@ -4,13 +4,14 @@ class Stage3 {
         this.drone = game.drone;
         this.drone.reset();
         this.gravity = 9.81; // m/s^2
-        this.desiredHeight = null;
-        this.currentHeight = this.game.canvas.height - this.drone.y;
+        this.desired_height = null;
+        this.current_height = this.drone.y;
         this.phase = 0;
         this.step = 0;
         this.oscillationTime = 0;
         this.constant = 0; // Coefficient for error
         this.derivativeConstant = 0; // Coefficient for derivative
+        this.positionUpdateCode = '';
 
         this.stagediv = document.createElement("div");
         this.stagediv.setAttribute("id", "Stage3Div");
@@ -52,11 +53,20 @@ class Stage3 {
                     [
                         /*Teaching Step*/[
                                             this.teachingLineClick,
-                                            "Click on the dotted red line to set the desired altitude, and the drone will adjust its thrust accordingly.", 
+                                            ["Click on the dotted red line to set the desired altitude, and the drone will adjust its thrust accordingly.",
+                                             "The difference between the current height and desired height is the error. Write an equation for error with the variables current_height and desired_height.     desired_height - current_height"
+                                            ], 
                                             () => true,
-                                             null, null
+                                            null, null, null
                                         ],
-                        /*Error Input Step*/ []
+                        /*Error Input Step*/ [
+                                                this.game.input,
+                                                ["Error = ", "Enter calculated error", "Submit"],
+                                                this.checkErrorSubmit.bind(this), 
+                                                this.game.hint, 
+                                                "Hint: The error is the difference between the desired height and current height.", 
+                                                null
+                                            ]
                     ]);
     }
     
@@ -66,9 +76,15 @@ class Stage3 {
             this.stagediv,
 
             [
+                /*Teaching Step*/[
+                                    this.game.createPhaseTeaching,
+                                    "Set the thrust using: (any number) * error + hover_thrust. Enter your thrust equation below.", 
+                                    () => true,
+                                    null, null, null
+                                ],
                 /*Thrust Input Step*/[
-                                    this.teachingLineClick,
-                                    "Click on the dotted red line to set the desired altitude, and the drone will adjust its thrust accordingly.", 
+                                    this.game.input,
+                                    ["Enter Thrust Equation (e.g., Kp * error + hover_thrust):", "Enter Thrust Equation", "Submit Thrust Equation"], 
                                     () => true,
                                     null, null
                                 ],
@@ -92,8 +108,7 @@ class Stage3 {
             ]);
     }
 
-
-    teachingLineClick(infoText, currentStage, phaseDiv, stepArray, stagediv, nextStep) {
+    teachingLineClick(infoTextArray, currentStage, phaseDiv, stepArray, stagediv, nextStep) {
         //Click on the dotted red line to set the desired altitude, then click "Submit Height" to continue.
 
         let teachDiv = document.createElement("div");
@@ -101,7 +116,7 @@ class Stage3 {
         teachDiv.setAttribute("class", "teachDiv textDiv");
 
         let teachText = document.createElement("p");
-        teachText.innerHTML = infoText;
+        teachText.innerHTML = infoTextArray[0];
         teachDiv.appendChild(teachText);
 
         let lockButton = document.createElement("button");
@@ -123,106 +138,25 @@ class Stage3 {
 
 
         lockButton.addEventListener('click', () => {
+            teachText.innerHTML = infoTextArray[1];
+            teachDiv.removeChild(lockButton);
+
             nextStep(currentStage, phaseDiv, stepArray, stagediv);
             currentStage.game.canvas.removeEventListener('click', handleCanvasClickGlue);
         });
     }
 
-
-
-
-    chooseHeight(dataBlob, currentStage, phaseDiv, stepArray, stagediv, nextStep) {
-        // Show instructions
-        let teachDiv = document.createElement("div");
-        teachDiv.setAttribute("id", "teachDiv");
-        teachDiv.setAttribute("class", "teachDiv textDiv");
-
-        let teachText = document.createElement("p");
-        teachText.innerHTML = infoText;
-
-        currentStage.updateInfoText('Click on the dotted red line to set the desired altitude, then click "Lock In Height" to continue.');
-
-        // Create the "Lock In Height" button
-        const lockButton = document.createElement('button');
-        lockButton.textContent = 'Lock In Height';
-        lockButton.disabled = true; // Disabled until a line click
-        lockButton.setAttribute('id', 'lockHeightButton');
-        phaseDiv.appendChild(lockButton);
-
-        // Handler for canvas click
-        function canvasClickHandler(event) {
-            currentStage.handleCanvasClick(event);
-            if (currentStage.desiredHeight !== null) {
-                lockButton.disabled = false;
-            }
-        }
-
-        // Add canvas click listener
-        currentStage.game.canvas.addEventListener('click', canvasClickHandler);
-
-        // Handler for lock button
-        lockButton.addEventListener('click', () => {
-            // Remove canvas click listener to prevent further changes
-            currentStage.game.canvas.removeEventListener('click', canvasClickHandler);
-            // Continue to next step
-            nextStep(currentStage, phaseDiv, stepArray, stagediv);
-        });
-
-        // Add phaseDiv to stagediv
-        stagediv.appendChild(phaseDiv);
-    }
-
-    validateUserCode(code) {
-        //check input
-
-        const pattern1 = /\s*mass\s*\*\s*gravity/i;
-        const pattern2 = /\s*gravity\s*\*\s*mass/i;
-        return pattern1.test(code) || pattern2.test(code);
-
-    }
-
-    wrongAnswer() {
-        //determine what is wrong with answer and give feedback
-        alert('This is incorrect, please try again.');
-    }
-
     nextPhase() {
         this.phase++;
+        this.step = 0;
+        if (this.currentPhaseDiv) {
+            this.stagediv.removeChild(this.currentPhaseDiv);
+        }
         this.managePhases();
     }
 
-    update(dt) {
-        // No dynamic update needed for this stage
-    }
-
-    draw(ctx) {
-        ctx.clearRect(0, 0, this.game.canvas.width, this.game.canvas.height);
-        this.game.drawBackground();
-        this.game.drawDrone();
-    }
-
-    cleanup() {
-        // Optional: Cleanup logic for Stage if needed
-    }
 
 
-
-
-
-
-
-    start() {
-        this.drone.y = this.game.canvas.height / 4;
-        this.currentHeight = this.game.canvas.height - this.drone.y;
-
-        document.getElementById('info').style.visibility = 'visible';
-        document.getElementById('completionMessage').style.visibility = 'hidden';
-        document.getElementById('heightInputContainer').style.visibility = 'hidden';
-        document.getElementById('hintButtonStage3').style.visibility = 'hidden';
-        document.getElementById('thrustInputContainer').style.visibility = 'hidden';
-
-        this.updateInfoText('In this stage, you will control the drone’s altitude. Click on the dotted red line to set the desired altitude, and the drone will adjust its thrust accordingly.');
-    }
 
     handleCanvasClick(event, lockButton) {
         const rect = this.game.canvas.getBoundingClientRect();
@@ -232,24 +166,12 @@ class Stage3 {
 
         // If the user clicks near the drone's center, set the desired height
         if (Math.abs(x - droneCenterX) < 10) {
-            this.desiredHeight = y;
+            this.desired_height = y;
             lockButton.disabled = false; // Enable the button after setting the height
         }
     }
 
 
-    updateInfoText(text) {
-        document.getElementById('info').style.visibility = 'visible';
-        document.getElementById('info').innerHTML = `<p>${text}</p>`;
-    }
-
-    showHint() {
-        alert('Hint: The drone needs to exert more thrust to go up, and less thrust to go down. Ensure the thrust is balanced to maintain altitude.');
-    }
-
-    showError(message) {
-        alert(message);
-    }
 
     update(dt) {
         if (this.phase === 3) { // Oscillation phase
@@ -318,8 +240,8 @@ class Stage3 {
 
 
     updateOscillation(dt) {
-        if (this.desiredHeight !== null) {
-            const error = this.desiredHeight - this.drone.y; // Calculate the error
+        if (this.desired_height !== null) {
+            const error = this.desired_height - this.drone.y; // Calculate the error
             const hoverThrust = this.drone.mass * this.gravity; // Calculate hover thrust
 
             // Evaluate the user-entered thrust equation
@@ -384,7 +306,6 @@ class Stage3 {
         }
     }
 
-
     draw(ctx) {
         ctx.clearRect(0, 0, this.game.canvas.width, this.game.canvas.height);
         this.game.drawBackground();
@@ -392,10 +313,10 @@ class Stage3 {
 
         this.drawDottedLine(ctx, this.drone.x, 0, this.drone.x, this.game.canvas.height);
 
-        if (this.phase >= 1 && this.desiredHeight !== null) {
+        if (this.phase >= 1 && this.desired_height !== null) {
             ctx.fillStyle = 'red';
-            ctx.fillText('X', this.drone.x, this.desiredHeight);
-            ctx.fillText('Desired Height', this.drone.x + 10, this.desiredHeight - 10);
+            ctx.fillText('X', this.drone.x, this.desired_height);
+            ctx.fillText('Desired Height', this.drone.x + 10, this.desired_height - 10);
             this.drawErrorArrow(ctx);
         }
 
@@ -420,7 +341,7 @@ class Stage3 {
 
     drawErrorArrow(ctx) {
         const fromX = this.drone.x - 15;
-        const fromY = this.desiredHeight;
+        const fromY = this.desired_height;
         const toY = this.drone.y;
         const label = 'Error';
 
@@ -465,35 +386,35 @@ class Stage3 {
         }
     }
 
-    showErrorCalculationPrompt() {
-        document.getElementById('heightInputContainer').style.visibility = 'hidden';
-        document.getElementById('errorInputContainer').style.visibility = 'visible';
-        this.updateInfoText('The difference between the current height and desired height is the error. Write an equation for error.');
-    }
+    checkErrorSubmit() {
+        const userErrorInput = this.positionUpdateCode; // Assuming this is the input from the user
+        const expectedError = this.desired_height - this.drone.y;
 
-    handleErrorSubmit() {
-        const userErrorInput = document.getElementById('inputError').value.trim();
-        const expression = userErrorInput.replace(/desired_height/g, this.desiredHeight.toFixed(2))
-                                         .replace(/current_height/g, this.drone.y.toFixed(2));
+        userErrorInput.replace(/\bdesired_?height\b/ig, "desired_height");
+        userErrorInput.replace(/\bcurrent_?height\b/ig, "current_height");
+        if (/\bdesired_height\b/.test(userErrorInput) &&
+            /\bcurrent_height\b/.test(userErrorInput)) {
 
-        let calculatedError;
-        try {
-            calculatedError = eval(expression);
-        } catch (e) {
-            this.showError('There was an error in your calculation. Please try again.');
-            return;
-        }
+            let userErrorInputFunction = new Function("desired_height", "current_height", "return(" + userErrorInput + ");");
 
-        const expectedError = this.desiredHeight - this.drone.y;
+            try {
+                let calculatedError = userErrorInputFunction(this.desired_height, this.current_height);
 
-        if (Math.abs(calculatedError - expectedError) < 0.01) {
-            alert('Correct! You calculated the error accurately.');
-            document.getElementById('errorInputContainer').style.visibility = 'hidden';
-            this.updateInfoText('Now, use the error to calculate the thrust.');
-            this.showThrustInputPrompt();
-            this.phase = 2;
+                if (Math.abs(calculatedError - expectedError) < 0.01) {
+                    alert('Correct! You calculated the error accurately.');
+                    return true; // Indicate that the error calculation is correct
+                } else {
+                    console.log("Difference of calculatedError and expectedError:" + Math.abs(calculatedError - expectedError));
+                    alert('Incorrect. Please try again.');
+                    return false; // Indicate that the error calculation is incorrect
+                }
+            } catch (e) {
+                alert("Please input a valid equation for error.");
+                return false; /* tell the user that their code didn't work right (it didn't compile/execute cleanly */
+            }
         } else {
-            this.showError('Incorrect. Please try again.');
+            alert('Incorrect. Please make sure to use the variables "current_height" and "desired_height" in your equation.');
+            return false; // Indicate that the user did not use the correct variables
         }
     }
 
@@ -513,7 +434,7 @@ class Stage3 {
         document.getElementById('derivativeInputContainer').style.visibility = 'visible';
     }
 
-   /* handleDerivativeSubmit() {
+   /*handleDerivativeSubmit() {
         const derivativeEquationInput = document.getElementById('inputDerivative').value.trim();
 
         // Ensure the equation includes both 'error' and 'derivative(error)'
