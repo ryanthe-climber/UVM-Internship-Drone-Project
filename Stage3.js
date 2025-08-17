@@ -87,8 +87,10 @@ class Stage3 {
                 [
                     this.game.input,
                     ["Enter Thrust Equation (e.g., Kp * error + hover_thrust): ", "Enter Thrust Equation", "Submit Thrust Equation"], 
-                    () => true,
-                    null, null
+                    this.handleThrustSubmit.bind(this),
+                    this.game.hint, 
+                    "Hint: Enter Thrust Equation (e.g., Kp * error + hover_thrust)", //FIXME - add a real hint
+                    null
                 ],
                 /*Simulation Step (oscillation)*/ 
                 [
@@ -201,41 +203,45 @@ class Stage3 {
 
     // Handle thrust submission after error calculation
     handleThrustSubmit() {
-        const thrustEquationInput = document.getElementById('inputThrust').value.trim();
+        const thrustEquationInput = this.positionUpdateCode;
+        // Normalize variable names for user flexibility
+        let normalizedInput = thrustEquationInput
+            .replace(/\bhover[ _]?thrust\b/ig, 'hover_thrust')
+            .replace(/\berror\b/ig, 'error');
 
-        // Check if the equation includes 'error' and 'hover_thrust'
-        if (!thrustEquationInput.includes('error') || !thrustEquationInput.includes('hover_thrust')) {
-            this.showError("The equation must include both 'error' and 'hover_thrust'. Please try again.");
-            return;
+        // Check for required variables
+        if (!/\berror\b/.test(normalizedInput) || !/\bhover_thrust\b/.test(normalizedInput)) {
+            alert("Incorrect. Please make sure to use the variables 'error' and 'hover_thrust' in your equation.");
+            return false;
         }
 
-        // Attempt to validate the equation
+        // Try to compile and test the function
         try {
-            // Simulate current error and hover_thrust values for validation
-            const testError = 10; // Simulated test error value
-            const testHoverThrust = this.drone.mass * this.gravity; // Calculate hover thrust for validation
-            const testThrust = eval(thrustEquationInput.replace(/error/g, testError).replace(/hover_thrust/g, testHoverThrust));
-
-            // Ensure the equation produces a numeric result
-            if (isNaN(testThrust)) {
-                throw new Error("Invalid equation result.");
-            }
-
-            // If the equation is correct, save it and move to the oscillation phase
-            this.proportionalEquation = thrustEquationInput;
-            this.phase = 3;  // Move to oscillation phase
-
-            // Provide feedback and hide the thrust input container
-            this.updateInfoText("The drone is oscillating. We need a derivative term to stabilize it.");
-            document.getElementById('thrustInputContainer').style.visibility = 'hidden';
-
-            // Start the oscillation phase
-            this.oscillationTime = 0;
-            this.startOscillation();
-
-        } catch (error) {
-            this.showError("Invalid thrust equation. Please ensure it is a valid equation and try again.");
+            this.userThrustFunction = new Function('error', 'hover_thrust', 'return (' + normalizedInput + ');');
+        } catch (e) {
+            alert("Please input a valid equation for thrust.");
+            this.userThrustFunction = null;
+            return false;
         }
+
+        // Test the function with sample values
+        const testError = 10;
+        const testHoverThrust = this.drone.mass * this.gravity;
+        let testResult;
+        try {
+            testResult = this.userThrustFunction(testError, testHoverThrust);
+            if (isNaN(testResult)) {
+                throw new Error("Result is not a number");
+            }
+        } catch (e) {
+            //console.error("Error evaluating thrust function:", e); FIXME - remove console log
+            alert("Invalid thrust equation. Please ensure it is a valid equation and try again.");
+            this.userThrustFunction = null;
+            return false;
+        }
+
+        // If the function works, save the equation and proceed
+        return true;
     }
 
     startOscillation() {
@@ -506,7 +512,7 @@ class Stage3 {
 
 
     initOscillationSim() {
-        
+        this.drone.reset();
     }
 
     stepOscillationSim(time) {
@@ -521,45 +527,28 @@ class Stage3 {
         let velocity = this.drone.vy;
         time = dt;
 
-        if (this.desired_height !== null) {
-            const error = this.desired_height - this.drone.y; // Calculate the error
-            const hoverThrust = this.drone.mass * this.gravity; // Calculate hover thrust
+        let error = this.desired_height - this.drone.y; // Calculate the error
+        let hover_thrust = this.drone.mass * this.gravity; // Calculate hover thrust
 
-            // Evaluate the user-entered thrust equation
-            let thrust;
-            try {
-                thrust = eval(this.proportionalEquation.replace(/error/g, error).replace(/hover_thrust/g, hoverThrust));
-            } catch (e) {
-                this.showError('There was an error in your thrust equation.');
-                return;
-            }
+        let userThrust = this.userThrustFunction(error, hover_thrust);
 
-            // Damped oscillation calculation
-            const dampingFactor = 0.1; // Adjust this value for desired damping
-            const dampingThrust = thrust * (1 - dampingFactor); // Apply damping to the thrust
-
-            // Simulate oscillation with damping
-            this.drone.vy += (dampingThrust / this.drone.mass - this.gravity) * dt; // Update vertical velocity
-            this.drone.y += this.drone.vy * dt; // Update position
-
-            // Draw the current forces acting on the drone
-            this.drawForces(thrust, error);
-        }
-
-        //v(t) = v(t-dt) + (f/m)*dt
+        this.drone.vy += (userThrust / this.drone.mass - this.gravity) * dt; // Update vertical velocity
 
         this.drone.update(dt);
-        let position = eval(this.positionUpdateCode.replace('previous_height', previous_height).replace('velocity', velocity).replace('time', time));
+        this.drawForces(userThrust, error);
+        let position = previous_height + (this.drone.vy * dt); // Update position
         this.drone.y = position;
-
-        this.displayVelocityAndPosition();
 
         //previous_height + velocity * time
     }
 
     OscillationSimComplete() {
-
+        // Check if the drone has stabilized within a certain thresholdkasf
     }
+
+    objectiveReached() {
+        return true;
+    }   
 
 
 }
