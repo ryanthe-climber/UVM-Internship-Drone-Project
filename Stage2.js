@@ -62,7 +62,7 @@ class Stage2 {
         let code = this.positionUpdateCode;
         const pattern1 = /\s*mass\s*\*\s*gravity/i;
         const pattern2 = /\s*gravity\s*\*\s*mass/i;
-        correct = pattern1.test(code) || pattern2.test(code);
+        let correct = pattern1.test(code) || pattern2.test(code);
 
         if(correct) {
             return true;
