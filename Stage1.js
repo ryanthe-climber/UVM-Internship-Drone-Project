@@ -39,10 +39,9 @@ class Stage1 {
                                     [   
                                         this.game.input,
                                         ["current_height = ", "Enter position equation", "Submit"],
-                                        this.game.inputDone, 
+                                        this.validateUserCode.bind(this), 
                                         this.game.hint, 
-                                        "Hint: Think about the relationship between position and velocity. Use the variables previous_height, velocity, and time.", 
-                                        [this.validateUserCode, this.wrongAnswer]
+                                        "Hint: Think about the relationship between position and velocity. Use the variables previous_height, velocity, and time."
                                     ],
                         /*Simulation Step*/
                                     [
@@ -54,17 +53,22 @@ class Stage1 {
                                         ],
                                         this.objectiveReached.bind(this),
                                         null,
-                                        null,
                                         null
                                     ]
                     ]);
     }
 
-    validateUserCode(code) {
+    validateUserCode() {
+        let code = this.positionUpdateCode;
         // Basic validation to check if the code follows the expected pattern
         const expectedPattern = /previous_height\s*\+\s*velocity\s*\*\s*time/i;
         let correct = expectedPattern.test(code);
-        return correct;
+        if(correct) {
+            return true;
+        } else {
+            this.wrongAnswer();
+            return false;
+        }
     }
 
     wrongAnswer() {

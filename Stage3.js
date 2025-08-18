@@ -57,15 +57,14 @@ class Stage3 {
                                              "The difference between the current height and desired height is the error. Write an equation for error with the variables current_height and desired_height.     desired_height - current_height"
                                             ], 
                                             () => true,
-                                            null, null, null
+                                            null, null
                                         ],
                         /*Error Input Step*/ [
                                                 this.game.input,
                                                 ["Error = ", "Enter calculated error", "Submit"],
                                                 this.checkErrorSubmit.bind(this), 
                                                 this.game.hint, 
-                                                "Hint: The error is the difference between the desired height and current height.", 
-                                                null
+                                                "Hint: The error is the difference between the desired height and current height."
                                             ]
                     ]);
     }
@@ -81,7 +80,7 @@ class Stage3 {
                     this.game.createPhaseTeaching,
                     "Set the thrust using: (any number) * error + hover_thrust. Enter your thrust equation below.", 
                     () => true,
-                    null, null, null
+                    null, null
                 ],
                 /*Thrust Input Step*/
                 [
@@ -89,8 +88,7 @@ class Stage3 {
                     ["Enter Thrust Equation (e.g., Kp * error + hover_thrust): ", "Enter Thrust Equation", "Submit Thrust Equation"], 
                     this.handleThrustSubmit.bind(this),
                     this.game.hint, 
-                    "Hint: Enter Thrust Equation (e.g., Kp * error + hover_thrust)", //FIXME - add a real hint
-                    null
+                    "Hint: Enter Thrust Equation (e.g., Kp * error + hover_thrust)" //FIXME - add a real hint
                 ],
                 /*Simulation Step (oscillation)*/ 
                 [
@@ -100,11 +98,9 @@ class Stage3 {
                         this.stepOscillationSim.bind(this), 
                         this.OscillationSimComplete.bind(this), 
                     ],
-                    this.objectiveReached.bind(this),
-                    null,
+                    this.OscillationObjectiveReached.bind(this),
                     null,
                     null
-
                 ]
             ]);
     }
@@ -115,13 +111,19 @@ class Stage3 {
             this.stagediv,
 
             [
-                /*Derivative Input Step*/[
-                                    this.teachingLineClick,
-                                    "Click on the dotted red line to set the desired altitude, and the drone will adjust its thrust accordingly.", 
-                                    () => true,
-                                    null, null
-                                ],
-                /*Simulation Step (stable)*/ []
+                /*Derivative Input Step*/
+                [
+                    this.game.input,
+                    ["To stabilize the drone, we need to add a derivative term. Enter a new thrust equation with a derivative term (e.g., Kp * error + Kd * derivative(error) + hover_thrust)."], 
+                    this.handleDerivativeSubmit.bind(this),
+                    this.game.hint, 
+                    "Hint: idk man figure it out" //FIXME - add a real hint
+                ],
+
+                /*Simulation Step (stable)*/ 
+                [
+
+                ]
             ]);
     }
 
@@ -169,6 +171,7 @@ class Stage3 {
         if (this.currentPhaseDiv) {
             this.stagediv.removeChild(this.currentPhaseDiv);
         }
+        this.drone.reset();
         this.managePhases();
     }
 
@@ -183,21 +186,6 @@ class Stage3 {
         if (Math.abs(x - droneCenterX) < 10) {
             this.desired_height = y;
             lockButton.disabled = false; // Enable the button after setting the height
-        }
-    }
-
-
-
-    update(dt) {
-        if (this.phase === 3) { // Oscillation phase
-            this.oscillationTime += dt;
-            this.drone.update(dt);
-
-            if (this.oscillationTime >= 3) {
-                this.showOscillationPopup();
-            }
-        } else if (this.phase === 4) { // Derivative thrust calculation
-            this.drone.update(dt);
         }
     }
 
@@ -241,48 +229,9 @@ class Stage3 {
         }
 
         // If the function works, save the equation and proceed
+
+        
         return true;
-    }
-
-    startOscillation() {
-        const oscillationDuration = 3; // Oscillate for 3 seconds
-        const oscillationInterval = setInterval(() => {
-            this.oscillationTime += 0.1; // Increment the oscillation time
-            this.updateOscillation(0.016); // Keep the drone oscillating
-
-            // Continue oscillation even after the prompt appears
-            if (this.phase === 4) { 
-                clearInterval(oscillationInterval);
-            }
-        }, 100); // Update every 100 milliseconds
-    }
-
-
-    updateOscillation(dt) {
-        if (this.desired_height !== null) {
-            const error = this.desired_height - this.drone.y; // Calculate the error
-            const hoverThrust = this.drone.mass * this.gravity; // Calculate hover thrust
-
-            // Evaluate the user-entered thrust equation
-            let thrust;
-            try {
-                thrust = eval(this.proportionalEquation.replace(/error/g, error).replace(/hover_thrust/g, hoverThrust));
-            } catch (e) {
-                this.showError('There was an error in your thrust equation.');
-                return;
-            }
-
-            // Damped oscillation calculation
-            const dampingFactor = 0.1; // Adjust this value for desired damping
-            const dampingThrust = thrust * (1 - dampingFactor); // Apply damping to the thrust
-
-            // Simulate oscillation with damping
-            this.drone.vy += (dampingThrust / this.drone.mass - this.gravity) * dt; // Update vertical velocity
-            this.drone.y += this.drone.vy * dt; // Update position
-
-            // Draw the current forces acting on the drone
-            this.drawForces(thrust, error);
-        }
     }
     
     // Validate and handle submission of the derivative equation
@@ -437,23 +386,7 @@ class Stage3 {
         }
     }
 
-    showThrustInputPrompt() {
-        document.getElementById('thrustInputContainer').style.visibility = 'visible';
-        this.updateInfoText('Set the thrust using: (any number) * error + hover_thrust. Enter your thrust equation below.');
-    }
-
-    resetDroneForDerivative() {
-        this.drone.y = this.game.canvas.height / 4;
-        this.drone.vy = 0;
-
-        // Update the text to prompt for the derivative equation
-        this.updateInfoText("To stabilize the drone, we need to add a derivative term. Enter a new thrust equation with a derivative term (e.g., Kp * error + Kd * derivative(error) + hover_thrust).");
-
-        // Show the derivative input box
-        document.getElementById('derivativeInputContainer').style.visibility = 'visible';
-    }
-
-   /*handleDerivativeSubmit() {
+    handleDerivativeSubmit() {
         const derivativeEquationInput = document.getElementById('inputDerivative').value.trim();
 
         // Ensure the equation includes both 'error' and 'derivative(error)'
@@ -489,7 +422,7 @@ class Stage3 {
         } catch (error) {
             this.showError("Invalid derivative equation. Please ensure it is a valid equation and try again.");
         }
-    }*/
+    }
 
     showOscillationPopup() {
         this.phase = 4; // Stop oscillation and move to derivative phase
@@ -513,6 +446,7 @@ class Stage3 {
 
     initOscillationSim() {
         this.drone.reset();
+        this.numOscillations = 0;
     }
 
     stepOscillationSim(time) {
@@ -521,6 +455,10 @@ class Stage3 {
             this.lastTime = time;
         }
         let dt = (time - this.lastTime) / 1000;
+        
+        if(dt > 0.2){ //make sure we don't have a huge dt
+            dt = 0;
+        }
         this.lastTime = time;
     
         let previous_height = this.drone.y;
@@ -538,15 +476,45 @@ class Stage3 {
         this.drawForces(userThrust, error);
         let position = previous_height + (this.drone.vy * dt); // Update position
         this.drone.y = position;
+        
+        if(error * this.lastError < 0) {
+                this.numOscillations++;
+        }
 
-        //previous_height + velocity * time
+        this.lastError = error; // Store the last error for derivative calculation
+
+
+        if(this.numOscillations >= 3) {
+            if(!this.oscillationDiv){  
+
+                this.game.clearDiv(this.currentPhaseDiv);
+                
+                this.oscillationDiv = document.createElement("div");
+                this.oscillationDiv.setAttribute("id", "oscillationDiv");
+                this.oscillationDiv.setAttribute("class", "textDiv");
+                
+                this.oscillationDiv.appendChild(document.createTextNode("The drone is oscillating because it still has velocity. Let’s stabilize it by adding a derivative term."));
+
+                let button = document.createElement("button");
+                button.setAttribute("id", "stabilizeButton");
+                button.setAttribute("class", "nextButton");
+                button.appendChild(document.createTextNode("Stabilize Drone"));
+                this.oscillationDiv.appendChild(button);
+                
+                this.currentPhaseDiv.appendChild(this.oscillationDiv);
+
+                button.addEventListener('click', () => {
+                    this.OscillationComplete = true;
+                });
+            }   
+        }
     }
 
     OscillationSimComplete() {
-        // Check if the drone has stabilized within a certain thresholdkasf
+        return this.OscillationComplete;
     }
 
-    objectiveReached() {
+    OscillationObjectiveReached() {
         return true;
     }   
 

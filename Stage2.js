@@ -7,6 +7,7 @@ class Stage2 {
         this.hoverThrust = null;
         this.phase = 0; // To track the interactive phases
         this.step = 0;
+        this.positionUpdateCode = '';
 
         this.stagediv = document.createElement("div");
         this.stagediv.setAttribute("id", "Stage2div");
@@ -43,25 +44,32 @@ class Stage2 {
                         /*Teaching Step*/[
                                             this.game.createPhaseTeaching,
                                             "The top arrow represents the hover thrust, and the bottom arrow represents the force of gravity (mass * gravity). These quantities must be equal for the net force to be zero, which means the net acceleration is zero, and the drone hovers.\n\nGiven the variables mass and gravity, write the equation that represents the hover_thrust:	", 
-                                            () => true, null, null
+                                            () => true, null
                                         ],
 
                         /*Input Step*/
                                     [   
                                         this.game.input,
                                         ["hover_thrust = ", "Enter hover thrust equation", "Submit"],
-                                        this.game.inputDone, 
+                                        this.validateUserCode.bind(this), 
                                         this.game.hint, 
-                                        "Hint: The force that the drone exerts must be equal in magnitude to the force pulling downwards to have a net force of 0. Therefore, hover_thrust - mass * gravity = 0.", 
-                                        [this.validateUserCode, this.wrongAnswer]
+                                        "Hint: The force that the drone exerts must be equal in magnitude to the force pulling downwards to have a net force of 0. Therefore, hover_thrust - mass * gravity = 0."
                                     ]
                     ]);
     }
 
-    validateUserCode(code) {
+    validateUserCode() {
+        let code = this.positionUpdateCode;
         const pattern1 = /\s*mass\s*\*\s*gravity/i;
         const pattern2 = /\s*gravity\s*\*\s*mass/i;
-        return pattern1.test(code) || pattern2.test(code);
+        correct = pattern1.test(code) || pattern2.test(code);
+
+        if(correct) {
+            return true;
+        } else {
+            this.wrongAnswer();
+            return false;
+        }
     }
 
     wrongAnswer() {

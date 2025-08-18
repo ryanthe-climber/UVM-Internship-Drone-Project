@@ -95,10 +95,9 @@ class Game {
         this.ctx.restore();
     }
 
-    clearScreen() {
-        let gameContent = document.getElementById('gameContent');
-        while (gameContent.firstChild) {
-            gameContent.removeChild(gameContent.firstChild);
+    clearDiv(div) {
+        while (div.firstChild) {
+            div.removeChild(div.firstChild);
         }
     }
 
@@ -179,15 +178,6 @@ class Game {
         stagediv.appendChild(phaseDiv);
     }
 
-    inputDone(cbArray, currentStage) {
-        //[CheckAnswer, wrongAnswer]
-        let correct = cbArray[0](currentStage.positionUpdateCode);
-        if(!correct) {
-            cbArray[1]();
-        }
-        return correct;
-    }
-
     hint(currentStage, phaseDiv, hintText) {
         let hintButtonDiv = document.createElement("div");
         hintButtonDiv.setAttribute("id", "hintButtonDiv");
@@ -209,7 +199,7 @@ class Game {
     }
 
     doNextPhaseStep(currentStage, phaseDiv, stepArray, stageDiv) {
-        if(stepArray[currentStage.step][2](stepArray[currentStage.step][5], currentStage)) {
+        if(stepArray[currentStage.step][2]()) {
             currentStage.step++;
             if(currentStage.step < stepArray.length) {
                 stepArray[currentStage.step][0](stepArray[currentStage.step][1], currentStage, phaseDiv, stepArray, stageDiv, currentStage.game.doNextPhaseStep);
@@ -226,8 +216,8 @@ class Game {
                     stagediv,
                     stepArray) {
                     //the step array will include more arrays that contain the following:
-                    //doSomethingCallback, "dataBlob", stepFinishedCallback, hintCallback, "HintData", stepFinishedData
-                    //      0                   1                  2                3           4           5
+                    //doSomethingCallback, "dataBlob", stepFinishedCallback, hintCallback, "HintData"
+                    //      0                   1                  2                3           4 
         let phaseDiv = document.createElement("div");
         phaseDiv.setAttribute("id", "phaseDiv");
         phaseDiv.setAttribute("class", "phaseDiv");
