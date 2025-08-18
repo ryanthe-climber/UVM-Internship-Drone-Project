@@ -4,6 +4,7 @@ class Drone {
         this.max_x = this.game.canvas.width - this.game.droneImage.width;
         this.orig_x = x;
         this.orig_y = y;
+        this.gravity = 9.81;
         this.reset()
     }
 
@@ -11,8 +12,7 @@ class Drone {
         if (this.crashed) return;
 
         // Gravity
-        const g = 100;  // m/s^2 CHANGE BACK TO 9.81 //FIXME
-        this.vy += g * dt;
+        this.vy += this.gravity * dt;
         this.x += this.vx * dt;
         this.y += this.vy * dt;
 
