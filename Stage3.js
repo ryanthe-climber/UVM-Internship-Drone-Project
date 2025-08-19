@@ -41,7 +41,7 @@ class Stage3 {
             case 3: this.phase3();
                     break;
 
-            default:this.game.endStage("message", "nextText", Stage4, this);
+            default:this.game.endStage("Stage 4 - Battery Life", "Start Stage 4", Stage4, this);
                     break;
         }
     }
@@ -226,7 +226,7 @@ class Stage3 {
 
         // Test the function with sample values
         const testError = 10;
-        const testHoverThrust = this.drone.mass * this.gravity;
+        const testHoverThrust = this.drone.mass * this.drone.gravity;
         let testResult;
         try {
             testResult = this.userThrustFunction(testError, testHoverThrust);
@@ -482,8 +482,6 @@ class Stage3 {
     }
 
     stepDerivativeSim(time) {
-        console.log("stepDerivativeSim");
-
          //do one step of the simulation
         if(this.lastTime == null) {
             this.lastTime = time;
@@ -495,8 +493,6 @@ class Stage3 {
         }
         this.lastTime = time;
     
-        let previous_height = this.drone.y;
-        let velocity = this.drone.vy;
         time = dt;
 
         let error = this.desired_height - this.drone.y; // Calculate the error

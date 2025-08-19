@@ -1,10 +1,11 @@
 class Drone {
     constructor(x, y, game) {
         this.game = game;
-        this.max_x = this.game.canvas.width - this.game.droneImage.width;
+        this.max_x = (this.game.canvas.width - this.game.droneImage.width) / this.game.meter; // meters
+        this.max_y = 10; //meters
         this.orig_x = x;
         this.orig_y = y;
-        this.gravity = 9.81;
+        this.gravity = -9.81;
         this.reset()
     }
 

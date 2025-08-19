@@ -4,9 +4,12 @@ class Stage4 {
         this.game = game;
         this.drone = game.drone;
         this.drone.reset();
-        this.battery = 100;
+        //this.battery = 100;
         this.powerConstant = 5; // Example power constant
         this.phase = 0;
+        this.step = 0;
+        this.desired_height = this.game.canvas.height / 2;
+
 
         this.stagediv = document.createElement("div");
         this.stagediv.setAttribute("id", "Stage4Div");
@@ -27,7 +30,7 @@ class Stage4 {
 
     managePhases() {
         switch(this.phase) {
-            case 0: game.stageExplainationDOM(this, this.stagediv, "explaination", "buttonText");
+            case 0: game.stageExplainationDOM(this, this.stagediv, "Battery", "Start");
                     break;
             case 1: this.phase1();
                     break;
@@ -38,44 +41,83 @@ class Stage4 {
     }
 
     phase1() {
-        this.currentPhaseDiv = game.createPhaseDOM(this,
-                            this.stagediv,
-                            "Teaching Text", 
-                            "Submit Instruction", 
-                            this.validateUserCode.bind(this), 
-                            this.wrongAnswer, 
-                            "Hint",
-                            this.nextPhase.bind(this),
-                            "Input Place Holder",
-                            this.initSim.bind(this),
-                            this.stepSim.bind(this),
-                            this.simComplete.bind(this),
-                            this.objectiveReached.bind(this),
-                            this.objectiveNotReached.bind(this));  
+        this.currentPhaseDiv = this.game.createPhaseDom2(
+            this,
+            this.stagediv,
 
-        //other code dependant on phase
+            [
+                /*Derivative Input Step*/
+                [
+                    this.game.input,
+                    [
+                        "Enter a thrust equation with a derivative term just like stage 3(e.g., Kp * error + Kd * derivative(error) + hover_thrust).", 
+                        "Enter Thrust Equation",
+                        "Submit Thrust Equation"
+                    ], 
+                    this.handleDerivativeSubmit.bind(this),
+                    this.game.hint, 
+                    "Hint: idk man figure it out" //FIXME - add a real hint
+                ],
+
+                /*Simulation Step (stable)*/ 
+                [
+                    this.game.simulateDrone,
+                    [
+                        this.initSim.bind(this), 
+                        this.stepSim.bind(this), 
+                        this.simComplete.bind(this), 
+                    ],
+                    this.objectiveReached.bind(this),
+                    null,
+                    null
+                ]
+            ]);
     }
 
-    validateUserCode(thrustInput) {
-        //check input
-        const thrust = parseFloat(thrustInput);
-            if (!isNaN(thrust)) {
-                const power = this.powerConstant * thrust;
-                const energy = power * 1; // Assuming t = 1 for simplicity
-                this.battery -= energy;
-                alert(`Battery remaining: ${this.battery}%`);
+    handleDerivativeSubmit() {
+        const derivativeEquationInput = this.positionUpdateCode;
 
-                return true;
-            } else {
-                return false;
+        // Normalize variable names for user flexibility
+        let normalizedInput = derivativeEquationInput
+        .replace(/\bhover[ _]?thrust\b/ig, 'hover_thrust')
+        .replace(/\berror\b/ig, 'error')
+        .replace(/derivative\s*\(\s*error\s*\)/ig, 'derivative_error');
+
+        // Check for required variables
+        if (!/\berror\b/.test(normalizedInput) || !/\bderivative_error\b/.test(normalizedInput)) {
+            alert("The equation must include both 'error' and 'derivative(error)'. Please try again.");
+            return false;
+        }
+
+        // Try to compile and test the function
+        try {
+            this.userDerivativeFunction = new Function('error', 'derivative_error', 'hover_thrust', 'return (' + normalizedInput + ');');
+        } catch (e) {
+            alert("Please input a valid equation for the derivative thrust.");
+            this.userDerivativeFunction = null;
+            return false;
+        }
+
+        // Test the function with sample values
+        const testError = 10;
+        const testDerivative = 2; // Simulated test derivative value
+        const testHoverThrust = this.drone.mass * this.drone.gravity;
+        let testResult;
+
+        try {
+            testResult = this.userDerivativeFunction(testError, testDerivative, testHoverThrust);
+            if (isNaN(testResult)) {
+                throw new Error("Result is not a number");
             }
-
+        } catch (e) {
+            console.error(e);
+            alert("Invalid derivative equation. Please ensure it is a valid equation and try again.");
+            this.userDerivativeFunction = null;
+            return false;
+        }
+        return true;
     }
 
-    wrongAnswer() {
-        //determine what is wrong with answer and give feedback
-        alert('Invalid input. Please enter a valid thrust value.');
-    }
 
     nextPhase() {
         this.phase++;
@@ -91,26 +133,58 @@ class Stage4 {
 
     initSim() {
         //initialize drone and other things
-        this.drone.x = this.game.canvas.width / 2;
-        this.drone.y = this.game.canvas.height / 4;
-
+        this.drone.reset();
+        this.lastError = 0;
         this.lastTime = null; 
     }
 
     stepSim(time) {
-        //do one step of the simulation
-        this.battery -= 0.3;
-        this.updateBatteryDisplay();
+             // Initialize lastTime
+        if(this.lastTime == null) {
+            this.lastTime = time;
+            return;
+        }
+
+        // Calculate timestep
+        let dt = (time - this.lastTime) / 1000;
+
+        if(dt > 0.05){ // clamp huge dt
+            dt = 0.016;
+        }
+        this.lastTime = time;
+
+        let error = this.desired_height - this.drone.y; // Error
+        let hover_thrust = this.drone.mass * this.drone.gravity; // Hover thrust
+        let derivative_error = (error - this.lastError) / dt;
+
+        let userThrust = 0;
+
+        if(this.drone.battery > 0) {
+            userThrust = this.userDerivativeFunction(error, derivative_error, hover_thrust);
+            
+            // --- BATTERY DEPLETION ---
+            let power = Math.pow(userThrust, 1.5);  
+            let batteryDrain = power * dt;           // Charge lost per tick
+            this.drone.battery -= batteryDrain;
+            this.updateBatteryDisplay();
+
+            if(this.drone.battery < 0) {
+                this.drone.battery = 0;
+            }
+        }
+        // Update vertical velocity
+        this.drone.vy += (userThrust / this.drone.mass) * dt;
+
+        // Update position
+        this.drone.update(dt);
+
+        // Update last error
+        this.lastError = error;
     }
 
     simComplete() {
         //check if the simulation is complete and return a boolean
-        if(this.battery < 1) {
-            alert("Battery has run out!")
-            return true;
-        } else {
-            return false;
-        }
+        return this.drone.crashed;
     }
 
     objectiveReached() {
@@ -123,26 +197,11 @@ class Stage4 {
         this.managePhases();
     }
 
-
-
     updateBatteryDisplay() {
         if (this.batteryElement) {
-            this.batteryElement.style.width = `${this.battery}%`;
-            this.batteryElement.style.backgroundColor = `rgb(${(100 - this.battery) * 2.55}, ${this.battery * 2.55}, 0)`;
+            this.batteryElement.style.width = `${this.drone.battery}%`;
+            this.batteryElement.style.backgroundColor = `rgb(${(100 - this.drone.battery) * 2.55}, ${this.drone.battery * 2.55}, 0)`;
         }
-    }
-
-    endStage4() {
-        // Hide elements specific to Stage 4
-        /*
-        document.getElementById('completionMessage').style.visibility = 'hidden';
-        document.getElementById('hoverThrustContainer').style.visibility = 'hidden';
-        document.getElementById('hintButtonStage2').style.visibility = 'hidden';
-        document.getElementById('info').style.visibility = 'hidden';
-        */
-
-        // Transition to Stage 5
-        this.game.startStage(Stage5);
     }
 }
 

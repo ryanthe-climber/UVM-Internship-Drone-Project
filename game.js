@@ -4,6 +4,7 @@ class Game {
         this.ctx = this.canvas.getContext('2d');
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
+        this.meter = this.canvas.height / 10; //assume the screen height is 10 meters
 
         this.droneImage = new Image();
         this.droneImage.src = 'pics/drone.png'; // Ensure this path is correct
