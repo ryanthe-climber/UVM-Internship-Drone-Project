@@ -114,9 +114,8 @@ class Stage1 {
 
         stageDiv.appendChild(this.displayDiv); 
 
-        this.drone.x = this.game.canvas.width / 2;
-        this.drone.y = this.game.canvas.height / 4;
-
+        this.drone.reset(); 
+        
         this.lastTime = null; 
     }
 
@@ -133,7 +132,7 @@ class Stage1 {
         time = dt;
 
         this.drone.update(dt);
-        let position = eval(this.positionUpdateCode.replace('previous_height', previous_height).replace('velocity', velocity).replace('time', time));
+        let position = eval(this.positionUpdateCode.replace('previous_height', previous_height).replace('velocity', velocity).replace('time', time)); //FIXME -get rid of eval
         this.drone.y = position;
 
         this.displayVelocityAndPosition();
@@ -160,7 +159,7 @@ class Stage1 {
 }
 
 function getMountainHeightAt(x) {
-    return this.game.canvas.height - 50; // Use window.game to reference the global game object
+    return 0;
 }
 
 // Assign Stage1 to the global window object

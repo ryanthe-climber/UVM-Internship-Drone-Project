@@ -19,7 +19,7 @@ class Drone {
 
         // Check collision with mountains
 
-        if (this.y >= getMountainHeightAt(this.x)) { //REWRITE TO CHECK IF DRONE IS OFF SCREEN
+        if (this.y < getMountainHeightAt(this.x)) { //REWRITE TO CHECK IF DRONE IS OFF SCREEN
             this.y = getMountainHeightAt(this.x);
             this.crash();
         }
@@ -34,17 +34,15 @@ class Drone {
             this.crash();
         }
         
-        if(this.y < 0) {
+        if(this.y > this.max_y) {
             this.y = 0;
             this.crash();
         }
 
-        // Update battery, position, and other parameters
-        this.battery -= dt * 0.1; // simple battery consumption model
     }
 
     thrustNeeded() {
-        return this.mass * 9.81; // hover thrust
+        return -1 * (this.mass * this.gravity); // hover thrust
     }
 
     crash() {

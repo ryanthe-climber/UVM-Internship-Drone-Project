@@ -4,11 +4,14 @@ class Game {
         this.ctx = this.canvas.getContext('2d');
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
-        this.meter = this.canvas.height / 10; //assume the screen height is 10 meters
+        this.world_height = 10;
+        
+        this.meter = (this.canvas.height - 60) / this.world_height; //assume the screen height is 10 meters
 
         this.droneImage = new Image();
         this.droneImage.src = 'pics/drone.png'; // Ensure this path is correct
-        this.drone = new Drone(this.canvas.width / 2, this.canvas.height / 4, this);
+        this.drone = new Drone((this.canvas.width / 2) / this.meter , 7.5, this);
+
 
         this.currentStage = null;
 
@@ -90,9 +93,9 @@ class Game {
 
     drawDrone() {
         this.ctx.save();
-        this.ctx.translate(this.drone.x, this.drone.y);
+        this.ctx.translate(this.drone.x * this.meter, this.canvas.height - (this.drone.y * this.meter));
         this.ctx.rotate(this.drone.angle);
-        this.ctx.drawImage(this.droneImage, -20, -20, 80, 80); // Adjust size and position as needed
+        this.ctx.drawImage(this.droneImage, -10, -75, 80, 80); // Adjust size and position as needed
         this.ctx.restore();
     }
 
