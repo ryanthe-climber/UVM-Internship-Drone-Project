@@ -5,7 +5,7 @@ class Drone {
         this.max_y = 10; //meters
         this.orig_x = x;
         this.orig_y = y;
-        this.gravity = -9.81;
+        this.gravity = 3.728;
         this.reset()
     }
 

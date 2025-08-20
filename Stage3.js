@@ -3,7 +3,6 @@ class Stage3 {
         this.game = game;
         this.drone = game.drone;
         this.drone.reset();
-        this.gravity = 9.81; // m/s^2
         this.desired_height = null;
         this.current_height = this.drone.y;
         this.phase = 0;
@@ -273,7 +272,7 @@ class Stage3 {
         // Test the function with sample values
         const testError = 10;
         const testDerivative = 2; // Simulated test derivative value
-        const testHoverThrust = this.drone.mass * this.gravity;
+        const testHoverThrust = this.drone.mass * this.drone.gravity;
         let testResult;
 
         try {
@@ -334,7 +333,7 @@ class Stage3 {
         const arrowX = this.drone.x;
         const arrowY = this.drone.y;
 
-        const thrustArrowLength = arrowLength + (error / this.gravity) * 10;
+        const thrustArrowLength = arrowLength + (error / this.drone.gravity) * 10;
         const upwardArrowLength = thrustArrowLength > arrowLength ? thrustArrowLength : arrowLength - 20;
         const downwardArrowLength = arrowLength;
 
@@ -422,7 +421,7 @@ class Stage3 {
         time = dt;
 
         let error = this.desired_height - this.drone.y; // Calculate the error
-        let hover_thrust = this.drone.mass * this.gravity; // Calculate hover thrust
+        let hover_thrust = this.drone.mass * this.drone.gravity; // Calculate hover thrust
 
         let userThrust = this.userThrustFunction(error, hover_thrust);
 
@@ -494,7 +493,7 @@ class Stage3 {
         time = dt;
 
         let error = this.desired_height - this.drone.y; // Calculate the error
-        let hover_thrust = this.drone.mass * this.gravity; // Calculate hover thrust
+        let hover_thrust = this.drone.mass * this.drone.gravity; // Calculate hover thrust
 
         let derivative_error = (error - this.lastError) / dt;
 

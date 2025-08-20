@@ -3,7 +3,6 @@ class Stage2 {
         this.game = game;
         this.drone = game.drone;
         this.drone.reset();
-        this.gravity = 9.81; // m/s^2
         this.hoverThrust = null;
         this.phase = 0; // To track the interactive phases
         this.step = 0;
