@@ -8,7 +8,7 @@ class Stage4 {
         this.powerConstant = 5; // Example power constant
         this.phase = 0;
         this.step = 0;
-        this.desired_height = this.game.canvas.height / 2;
+        this.desired_height = this.game.canvas.height / 2 / this.game.meter;
 
 
         this.stagediv = document.createElement("div");
@@ -154,13 +154,16 @@ class Stage4 {
         this.lastTime = time;
 
         let error = this.desired_height - this.drone.y; // Error
-        let hover_thrust = this.drone.mass * this.drone.gravity; // Hover thrust
+        let hover_thrust = -1 * this.drone.mass * this.drone.gravity; // Hover thrust
         let derivative_error = (error - this.lastError) / dt;
 
         let userThrust = 0;
 
         if(this.drone.battery > 0) {
             userThrust = this.userDerivativeFunction(error, derivative_error, hover_thrust);
+            if(userThrust < 0) {
+                userThrust = 0;
+            }
             
             // --- BATTERY DEPLETION ---
             let power = Math.pow(userThrust, 1.5);  

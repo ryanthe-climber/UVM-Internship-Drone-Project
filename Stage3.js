@@ -421,7 +421,7 @@ class Stage3 {
         time = dt;
 
         let error = this.desired_height - this.drone.y; // Calculate the error
-        let hover_thrust = this.drone.mass * this.drone.gravity; // Calculate hover thrust
+        let hover_thrust = -1 * this.drone.mass * this.drone.gravity; // Calculate hover thrust
 
         let userThrust = this.userThrustFunction(error, hover_thrust);
 
@@ -493,7 +493,7 @@ class Stage3 {
         time = dt;
 
         let error = this.desired_height - this.drone.y; // Calculate the error
-        let hover_thrust = this.drone.mass * this.drone.gravity; // Calculate hover thrust
+        let hover_thrust = -1 * this.drone.mass * this.drone.gravity; // Calculate hover thrust
 
         let derivative_error = (error - this.lastError) / dt;
 
