@@ -132,10 +132,9 @@ class Stage1 {
         time = dt;
 
         this.drone.update(dt);
-        let position = eval(this.positionUpdateCode.replace('previous_height', previous_height).replace('velocity', velocity).replace('time', time)); //FIXME -get rid of eval
-        this.drone.y = position;
 
         this.displayVelocityAndPosition();
+        console.log(`Height: ${this.drone.y}\t\tVelocity: ${this.drone.vy}`);
 
         //previous_height + velocity * time
     }

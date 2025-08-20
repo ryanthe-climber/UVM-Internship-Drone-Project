@@ -92,18 +92,19 @@ class Stage2 {
     }
 
     drawForces(ctx) {
-        const arrowLength = 50;
+        const arrowLength = 1;
         const arrowX = this.drone.x;
-        const arrowY = this.drone.y;
+        const arrowY = this.drone.y + 0.325;
 
         ctx.strokeStyle = 'red';
         ctx.lineWidth = 2;
 
-        // Draw the hover thrust arrow (upward)
-        this.drawArrow(ctx, arrowX, arrowY, arrowX, arrowY - arrowLength, 'hover_thrust');
 
+        // Draw the hover thrust arrow (upward)
+        this.drawArrow(ctx, this.game.canvas.width - arrowX * this.game.meter, this.game.canvas.height - arrowY * this.game.meter, this.game.canvas.width - arrowX * this.game.meter, this.game.canvas.height - (arrowY + arrowLength) * this.game.meter , 'hover_thrust');
+
+        this.drawArrow(ctx, this.game.canvas.width - arrowX * this.game.meter, this.game.canvas.height - arrowY * this.game.meter, this.game.canvas.width - arrowX * this.game.meter, this.game.canvas.height - (arrowY - arrowLength) * this.game.meter , 'Mass * Gravity');
         // Draw the gravity force arrow (downward)
-        this.drawArrow(ctx, arrowX, arrowY, arrowX, arrowY + arrowLength, 'Mass * Gravity');
     }
 
     drawArrow(ctx, fromX, fromY, toX, toY, label) {

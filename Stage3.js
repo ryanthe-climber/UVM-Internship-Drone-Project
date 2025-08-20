@@ -192,11 +192,11 @@ class Stage3 {
         const rect = this.game.canvas.getBoundingClientRect();
         const x = event.clientX - rect.left;
         const y = event.clientY - rect.top;
-        const droneCenterX = this.drone.x;
+        const droneCenterX = this.drone.x * this.game.meter;
 
         // If the user clicks near the drone's center, set the desired height
         if (Math.abs(x - droneCenterX) < 10) {
-            this.desired_height = y;
+            this.desired_height = y / this.game.meter;
             lockButton.disabled = false; // Enable the button after setting the height
         }
     }
@@ -294,12 +294,14 @@ class Stage3 {
         this.game.drawBackground();
         this.game.drawDrone();
 
-        this.drawDottedLine(ctx, this.drone.x, 0, this.drone.x, this.game.canvas.height);
+        let x_height = this.game.canvas.width - this.drone.x * this.game.meter;
+
+        this.drawDottedLine(ctx, x_height , 0, x_height, this.game.canvas.height);
 
         if (this.phase >= 1 && this.desired_height !== null) {
             ctx.fillStyle = 'red';
-            ctx.fillText('X', this.drone.x, this.desired_height);
-            ctx.fillText('Desired Height', this.drone.x + 10, this.desired_height - 10);
+            ctx.fillText('X', x_height - 5, this.desired_height * this.game.meter);
+            ctx.fillText('Desired Height', x_height + 20, this.desired_height * this.game.meter);
             this.drawErrorArrow(ctx);
         }
 
