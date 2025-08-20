@@ -101,9 +101,9 @@ class Stage2 {
 
 
         // Draw the hover thrust arrow (upward)
-        this.drawArrow(ctx, this.game.canvas.width - arrowX * this.game.meter, this.game.canvas.height - arrowY * this.game.meter, this.game.canvas.width - arrowX * this.game.meter, this.game.canvas.height - (arrowY + arrowLength) * this.game.meter , 'hover_thrust');
+        this.drawArrow(ctx, arrowX * this.game.meter, this.game.canvas.height - arrowY * this.game.meter, arrowX * this.game.meter, this.game.canvas.height - (arrowY + arrowLength) * this.game.meter , 'hover_thrust');
 
-        this.drawArrow(ctx, this.game.canvas.width - arrowX * this.game.meter, this.game.canvas.height - arrowY * this.game.meter, this.game.canvas.width - arrowX * this.game.meter, this.game.canvas.height - (arrowY - arrowLength) * this.game.meter , 'Mass * Gravity');
+        this.drawArrow(ctx, arrowX * this.game.meter, this.game.canvas.height - arrowY * this.game.meter, arrowX * this.game.meter, this.game.canvas.height - (arrowY - arrowLength) * this.game.meter , 'Mass * Gravity');
         // Draw the gravity force arrow (downward)
     }
 

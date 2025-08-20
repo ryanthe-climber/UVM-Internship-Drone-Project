@@ -196,7 +196,7 @@ class Stage3 {
 
         // If the user clicks near the drone's center, set the desired height
         if (Math.abs(x - droneCenterX) < 10) {
-            this.desired_height = y / this.game.meter;
+            this.desired_height = (this.game.canvas.height - y) / this.game.meter;
             lockButton.disabled = false; // Enable the button after setting the height
         }
     }
@@ -294,24 +294,20 @@ class Stage3 {
         this.game.drawBackground();
         this.game.drawDrone();
 
-        let x_height = this.game.canvas.width - this.drone.x * this.game.meter;
+        let x_height = this.drone.x * this.game.meter;
 
         this.drawDottedLine(ctx, x_height , 0, x_height, this.game.canvas.height);
 
         if (this.phase >= 1 && this.desired_height !== null) {
             ctx.fillStyle = 'red';
-            ctx.fillText('X', x_height - 5, this.desired_height * this.game.meter);
-            ctx.fillText('Desired Height', x_height + 20, this.desired_height * this.game.meter);
+            ctx.fillText('X', x_height - 5, this.game.canvas.height - this.desired_height * this.game.meter);
+            ctx.fillText('Desired Height', x_height + 20, this.game.canvas.height - this.desired_height * this.game.meter);
             this.drawErrorArrow(ctx);
-        }
-
-        if (this.phase === 3 || this.phase === 4) {
-            this.drawForces(ctx);
         }
 
         ctx.font = '16px Arial';
         ctx.fillStyle = 'black';
-        ctx.fillText(`Current Height: ${(this.game.canvas.height - this.drone.y).toFixed(2)}px`, this.drone.x + 50, this.drone.y);
+        ctx.fillText(`Current Height: ${this.drone.y.toFixed(2)} meters`, this.drone.x * this.game.meter + 50, this.game.canvas.height - this.drone.y * this.game.meter);
     }
 
     drawDottedLine(ctx, x1, y1, x2, y2) {
@@ -325,9 +321,9 @@ class Stage3 {
     }
 
     drawErrorArrow(ctx) {
-        const fromX = this.drone.x - 15;
-        const fromY = this.desired_height;
-        const toY = this.drone.y;
+        const fromX = this.drone.x * this.game.meter - 15;
+        const fromY = this.game.canvas.height - this.desired_height * this.game.meter;
+        const toY = this.game.canvas.height - this.drone.y * this.game.meter;
         const label = 'Error';
 
         this.drawArrow(ctx, fromX, fromY, fromX, toY, label);
@@ -433,7 +429,7 @@ class Stage3 {
         this.drone.vy += (userThrust / this.drone.mass) * dt; // Update vertical velocity
 
         this.drone.update(dt);
-        this.drawForces(userThrust, error);
+        //this.drawForces(userThrust, error);
         
         if(error * this.lastError < 0) {
                 this.numOscillations++;
@@ -469,11 +465,11 @@ class Stage3 {
     }
 
     OscillationSimComplete() {
-        return this.OscillationComplete;
+        return this.OscillationComplete || this.drone.crashed;
     }
 
     OscillationObjectiveReached() {
-        return true;
+        return !this.drone.crashed;
     }   
 
 
@@ -507,11 +503,11 @@ class Stage3 {
         this.drone.vy += (userThrust / this.drone.mass) * dt; // Update vertical velocity
 
         this.drone.update(dt);
-        this.drawForces(userThrust, error);
+        //this.drawForces(userThrust, error);
 
         this.lastError = error; // Store the last error for derivative calculation
 
-        if(Math.abs(error) < 25) {
+        if(Math.abs(error) < 0.1) {
             this.totalTime += dt;
         }
     }

@@ -134,7 +134,7 @@ class Stage1 {
         this.drone.update(dt);
 
         this.displayVelocityAndPosition();
-        console.log(`Height: ${this.drone.y}\t\tVelocity: ${this.drone.vy}`);
+        //console.log(`Height: ${this.drone.y.toFixed(5)}\tVelocity: ${this.drone.vy.toFixed(5)}\tDt: ${dt.toFixed(5)}`);
 
         //previous_height + velocity * time
     }
