@@ -3,8 +3,6 @@ class Stage4 {
         constructor(game) {
         this.game = game;
         this.drone = game.drone;
-        this.drone.reset();
-        //this.battery = 100;
         this.powerConstant = 5; // Example power constant
         this.phase = 0;
         this.step = 0;
@@ -15,12 +13,8 @@ class Stage4 {
         this.stagediv.setAttribute("id", "Stage4Div");
         this.stagediv.setAttribute("class", "stageDiv");
 
-        this.batteryElement = document.createElement("div");
-        this.batteryElement.setAttribute("class", "batteryElement");
-        this.stagediv.appendChild(this.batteryElement);
-
         this.gameContent = document.getElementById("gameContent");
-        gameContent.appendChild(this.stagediv);
+        this.gameContent.appendChild(this.stagediv);
         this.managePhases();
     }
 
@@ -35,7 +29,7 @@ class Stage4 {
             case 1: this.phase1();
                     break;
 
-            default:this.game.endStage("message", "nextText", Stage5, this);
+            default:this.game.endStage("Stage 5 - Mountains", "Start", Stage5, this);
                     break;
         }
     }
@@ -136,6 +130,19 @@ class Stage4 {
         this.drone.reset();
         this.lastError = 0;
         this.lastTime = null; 
+
+
+        //BATTERY
+
+        this.batteryOutline = document.createElement("div");
+        this.batteryOutline.setAttribute("class", "batteryOutline");
+        this.batteryElement = document.createElement("div");
+        this.batteryElement.setAttribute("class" ,"batteryElement");
+
+        this.batteryElement.style.width = `${this.drone.battery}%`
+
+        this.batteryOutline.appendChild(this.batteryElement);
+        this.stagediv.appendChild(this.batteryOutline);
     }
 
     stepSim(time) {

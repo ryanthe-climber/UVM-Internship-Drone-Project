@@ -416,8 +416,6 @@ class Stage3 {
         }
         this.lastTime = time;
     
-        let previous_height = this.drone.y;
-        let velocity = this.drone.vy;
         time = dt;
 
         let error = this.desired_height - this.drone.y; // Calculate the error
