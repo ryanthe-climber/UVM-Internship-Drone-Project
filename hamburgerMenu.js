@@ -68,4 +68,10 @@ document.addEventListener('DOMContentLoaded', () => {
         game.clearDiv(gameContent);
     	game.startStage(Stage10);
 	});
+
+	document.getElementById('stageTestLink').addEventListener('click', (e) => {
+    	e.preventDefault();
+        game.clearDiv(gameContent);
+    	game.startStage(StageTest);
+	});
 });

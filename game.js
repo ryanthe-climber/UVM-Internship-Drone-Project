@@ -158,10 +158,11 @@ class Game {
 
         inputDiv.appendChild(document.createTextNode(dataArray[0]));
 
-        let inputBox = document.createElement("input");
+        let inputBox = document.createElement("textarea");
         inputBox.setAttribute("id", "inputBox");
-        inputBox.setAttribute("type", "text"); 
+        //inputBox.setAttribute("type", "textarea"); 
         inputBox.setAttribute("placeholder", dataArray[1]);
+        inputBox.setAttribute("field-sizing", "content"); 
 
         //button to submit input
         let submitButton = document.createElement("button");

@@ -9,11 +9,41 @@ class Drone {
         this.reset()
     }
 
-    update(dt) {
-        if (this.crashed) return;
+    update(dt, thrustArray) {
 
-        // Gravity
-        this.vy += this.gravity * dt;
+        if (this.crashed) return; //FIXME maybe change this
+
+        if(Array.isArray(thrustArray)) { 
+            if(thrustArray.length == 1) {
+                //thrust value should be for both motors
+                this.MotorL = thrustArray[0];
+                this.MotorR = thrustArray[0];
+            } else if(thrustArray.length == 2) {
+                //thrust value should be individual
+                this.MotorL = thrustArray[0];
+                this.MotorR = thrustArray[1];
+                
+            } else {
+                //invalid input with too many values
+                throw new RangeError(`${thrustArray.length} thrust values entered. Enter only 1 or 2. `);
+            }
+        } else {
+            throw new TypeError("thrustArray must be an array.");
+        }
+ 
+        const cosA = Math.cos(this.angle);
+        const sinA = Math.sin(this.angle);
+
+        this.ty = (this.MotorL + this.MotorR) * cosA; // vertical thrust
+        this.tx = (this.MotorL + this.MotorR) * sinA; // horizontal thrust
+
+        this.angularVelocity += dt*1*(this.MotorL - this.MotorR) / this.rotationalMass;
+        this.angle += this.angularVelocity * dt;
+
+        this.vy += (this.ty / this.mass) * dt; // Update vertical velocity
+        this.vx += (this.tx / this.mass) * dt; // Update horizontal velocity
+
+        this.vy += this.gravity * dt; //account for gravity
         this.x += this.vx * dt;
         this.y += this.vy * dt;
 
@@ -58,8 +88,11 @@ class Drone {
         this.angle = 0;
         this.vx = 0;
         this.vy = 0;
+        this.MotorL = 0;
+        this.MotorR = 0;
         this.angularVelocity = 0;
         this.mass = 1;  // kg
+        this.rotationalMass = 1; //FIXME - ask what this means
         this.motorStrength = 10;  // max power
         this.automatic = false;
         this.crashed = false; // New property to indicate if the drone has crashed
