@@ -16,8 +16,8 @@ class Drone {
         if(Array.isArray(thrustArray)) { 
             if(thrustArray.length == 1) {
                 //thrust value should be for both motors
-                this.MotorL = thrustArray[0];
-                this.MotorR = thrustArray[0];
+                this.MotorL = thrustArray[0] / 2;
+                this.MotorR = thrustArray[0] / 2;
             } else if(thrustArray.length == 2) {
                 //thrust value should be individual
                 this.MotorL = thrustArray[0];

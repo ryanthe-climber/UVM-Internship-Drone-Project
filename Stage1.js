@@ -131,10 +131,9 @@ class Stage1 {
         let velocity = this.drone.vy;
         time = dt;
 
-        this.drone.update(dt);
+        this.drone.update(dt, [0]); // no thrust because drone is in free fall
 
         this.displayVelocityAndPosition();
-        //console.log(`Height: ${this.drone.y.toFixed(5)}\tVelocity: ${this.drone.vy.toFixed(5)}\tDt: ${dt.toFixed(5)}`);
 
         //previous_height + velocity * time
     }

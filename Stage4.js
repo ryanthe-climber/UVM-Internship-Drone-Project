@@ -164,12 +164,12 @@ class Stage4 {
         let hover_thrust = -1 * this.drone.mass * this.drone.gravity; // Hover thrust
         let derivative_error = (error - this.lastError) / dt;
 
-        let userThrust = 0;
+        let userThrust = [0];
 
         if(this.drone.battery > 0) {
-            userThrust = this.userDerivativeFunction(error, derivative_error, hover_thrust);
+            userThrust = [this.userDerivativeFunction(error, derivative_error, hover_thrust)];
             if(userThrust < 0) {
-                userThrust = 0;
+                userThrust = [0];
             }
             
             // --- BATTERY DEPLETION ---
@@ -183,10 +183,9 @@ class Stage4 {
             }
         }
         // Update vertical velocity
-        this.drone.vy += (userThrust / this.drone.mass) * dt;
 
         // Update position
-        this.drone.update(dt);
+        this.drone.update(dt, userThrust);
 
         // Update last error
         this.lastError = error;
