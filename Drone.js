@@ -31,14 +31,15 @@ class Drone {
             throw new TypeError("thrustArray must be an array.");
         }
  
+        this.angularAcceleration = (this.MotorL - this.MotorR) / this.rotationalMass;
+        this.angularVelocity += this.angularAcceleration * dt;
+        this.angle += this.angularVelocity * dt;
+
         const cosA = Math.cos(this.angle);
         const sinA = Math.sin(this.angle);
 
         this.ty = (this.MotorL + this.MotorR) * cosA; // vertical thrust
         this.tx = (this.MotorL + this.MotorR) * sinA; // horizontal thrust
-
-        this.angularVelocity += dt*1*(this.MotorL - this.MotorR) / this.rotationalMass;
-        this.angle += this.angularVelocity * dt;
 
         this.vy += (this.ty / this.mass) * dt; // Update vertical velocity
         this.vx += (this.tx / this.mass) * dt; // Update horizontal velocity
@@ -91,8 +92,9 @@ class Drone {
         this.MotorL = 0;
         this.MotorR = 0;
         this.angularVelocity = 0;
+        this.angularAcceleration = 0;
         this.mass = 1;  // kg
-        this.rotationalMass = 1; //FIXME - ask what this means
+        this.rotationalMass = 1;
         this.motorStrength = 10;  // max power
         this.automatic = false;
         this.crashed = false; // New property to indicate if the drone has crashed

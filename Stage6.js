@@ -1,158 +1,251 @@
 class Stage6 {
     constructor(game) {
-        this.game = game;
-        this.setHeight = 150;  // Default set height if not chosen
-        this.currentHeight = 0;
-        this.landingSpeed = 0; // Speed of descent based on user input (height = set_height - time)
-        this.isLanding = false; // Track whether the drone is landing
-        this.time = 0; // Track time for descent
-        this.dashedLineY = this.game.canvas.height - 50; // Default dashed line near the bottom
-        this.isHeightSet = false;
-        this.droneImage = new Image();  // Image for the drone
-        this.droneImage.src = 'pics/drone.png';  // Path to the drone image
-        document.getElementById('startButton').style.visibility = 'hidden';
-        document.getElementById('info').style.visibility = 'hidden';
-        this.initUI();
+        this.drone = game.drone;
+        this.drone.reset();
+        this.positionUpdateCode = '';
+        this.phase = 0;
+        this.step = 0;
+
+        this.stagediv = document.createElement("div");
+        this.stagediv.setAttribute("id", "stage6div");
+        this.stagediv.setAttribute("class", "stageDiv");
+    
+        this.gameContent = document.getElementById("gameContent");
+        gameContent.appendChild(this.stagediv);
+        this.managePhases();
     }
+    
+    managePhases() {
+        switch(this.phase) {
+            case 0: game.stageExplainationDOM(this, this.stagediv, 'Stage 6 - Landing', "Start Mission");
+                    break;
+            case 1: this.phase1();
+                    break;
 
-    initUI() {
-        const container = document.getElementById('landingStageContainer');
-        container.style.visibility = 'visible';
-        container.style.position = 'absolute';
-        container.style.top = '10px';
-        container.style.left = '10px';
-        container.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
-        container.style.padding = '15px';
-        container.style.borderRadius = '8px';
-        container.style.width = '300px';
-
-        const titleText = document.createElement('div');
-        titleText.innerText = "6 - Landing";
-        titleText.style.color = 'black';
-        titleText.style.fontSize = '20px';
-        titleText.style.fontWeight = 'bold';
-        titleText.style.marginBottom = '10px';
-        container.appendChild(titleText);
-
-        const instructionsText = document.createElement('div');
-        instructionsText.innerText = "Move your mouse to set the initial height (click in the bottom quarter of the screen). The drone will use height control to reach the set height. Then, program the descent with the equation height = set_height - time.";
-        instructionsText.style.color = 'grey';
-        instructionsText.style.fontSize = '16px';
-        instructionsText.style.marginBottom = '20px';
-        container.appendChild(instructionsText);
-
-        // Input for y = -t (user programs the descent)
-        const programLabel = document.createElement('div');
-        programLabel.innerText = "Program descent (height = set_height - time):";
-        programLabel.style.marginTop = '20px';
-        container.appendChild(programLabel);
-
-        this.descentInput = document.createElement('input');
-        this.descentInput.type = 'text';
-        this.descentInput.placeholder = "Enter descent equation";
-        container.appendChild(this.descentInput);
-        container.appendChild(document.createElement('br'));
-
-        const submitDescentButton = document.createElement('button');
-        submitDescentButton.innerText = "Submit Descent Program";
-        submitDescentButton.onclick = () => this.startLanding();
-        container.appendChild(submitDescentButton);
-
-        // Message container for feedback
-        this.messageContainer = document.createElement('div');
-        this.messageContainer.style.marginTop = '20px';
-        this.messageContainer.style.color = 'red';
-        container.appendChild(this.messageContainer);
-
-        // Set up the mouse move listener for height selection
-        this.game.canvas.addEventListener('mousemove', (e) => this.updateDashedLine(e));
-        this.game.canvas.addEventListener('click', (e) => this.setDroneHeight(e));
-    }
-
-    updateDashedLine(e) {
-        // Update the Y position of the dashed line based on mouse movement
-        const rect = this.game.canvas.getBoundingClientRect();
-        const mouseY = e.clientY - rect.top;
-
-        // Limit the dashed line to the bottom quarter of the screen
-        if (mouseY > this.game.canvas.height * 0.75) {
-            this.dashedLineY = mouseY;
+            default:this.game.endStage("Stage 6 Completed", "Stage 7 - Tilt/Movement Control", Stage7, this);
+                    this.stageEnded = true;
+                    break;
         }
     }
 
-    setDroneHeight(e) {
-        // Set the initial height based on the clicked Y position
-        const rect = this.game.canvas.getBoundingClientRect();
-        const clickY = e.clientY - rect.top;
+    phase1() {
+        this.currentPhaseDiv = this.game.createPhaseDom2(this,
+                    this.stagediv,
+                    [
+                        /*Teaching Step*/[this.game.createPhaseTeaching, this.getInitialInfoText(), () => true, null, null],
 
-        // Limit the height setting to the bottom quarter of the screen
-        if (clickY > this.game.canvas.height * 0.75) {
-            this.setHeight = this.game.canvas.height - clickY;
-            this.currentHeight = this.setHeight;
-            this.isHeightSet = true;
-            this.messageContainer.innerText = `Drone set to height: ${this.setHeight}px. Now program the descent.`;
-        } else {
-            this.messageContainer.innerText = "Please click in the bottom quarter of the screen.";
-        }
+                        /*Desired Height Input Step*/
+                                    [   
+                                        this.game.input,
+                                        ["desired_height = ", "Set desired height", "Submit"],
+                                        this.DesiredHeightSubmit.bind(this), 
+                                        this.game.hint, 
+                                        "Hint: set the desired height to current height / 2" //Add hint
+                                    ],
+
+                        //Derivative Input Step            
+                                    [
+                                        this.game.input,
+                                        [
+                                            "Enter a thrust equation with a derivative term (e.g., Kp * error + Kd * derivative(error) + hover_thrust).",
+                                            "Enter Thrust Equation", 
+                                            "Submit Thrust Equation"
+                                        ], 
+                                        this.handleDerivativeSubmit.bind(this),
+                                        this.game.hint, 
+                                        "Hint: idk man figure it out" //FIXME - add a real hint
+                                    ],
+                        /*Simulation Step*/
+                                    [
+                                        this.game.simulateDrone, 
+                                        [
+                                            this.initSim.bind(this), 
+                                            this.stepSim.bind(this), 
+                                            this.simComplete.bind(this), 
+                                        ],
+                                        this.objectiveReached.bind(this),
+                                        null,
+                                        null
+                                    ]
+                    ]);
     }
 
-    startLanding() {
-        const userInput = this.descentInput.value;
+    DesiredHeightSubmit() {
+        const heightEquationInput = this.positionUpdateCode;
 
-        // Check if the input matches the expected descent equation height = set_height - time
-        if (userInput !== "height = set_height - time") {
-            this.messageContainer.innerText = "Incorrect equation. Please program height = set_height - time.";
-            return;
+        // Normalize variable names for user flexibility
+        let normalizedInput = heightEquationInput
+            .replace(/\bcurrent[ _]?height\b/ig, 'current_height')
+            .replace(/\s+/g, ' ')
+            .trim();
+
+        // Check that the required variable is included
+        if (!/\bcurrent_height\b/.test(normalizedInput)) {
+            alert("Your equation must include current height.");
+            return false;
         }
 
-        this.messageContainer.innerText = "Landing initiated. Drone will descend using height = set_height - time.";
-        this.isLanding = true;
-        this.time = 0;  // Start descent
+        // Check that the input contains a division
+        if (!/\/\s*2\b/.test(normalizedInput)) {
+            alert("Your equation must involve dividing the current height by 2.");
+            return false;
+        }
+
+        // Try to compile and test the function
+        try {
+            this.userHeightFunction = new Function('current_height', 'return (' + normalizedInput + ');');
+        } catch (e) {
+            alert("Your input doesn't form a valid equation. Please correct any syntax errors.");
+            this.userHeightFunction = null;
+            return false;
+        }
+
+        // Test the function with sample values
+        const testHeight = 20;
+        let testResult;
+        try {
+            testResult = this.userHeightFunction(testHeight);
+            if (isNaN(testResult)) throw new Error("Result is not a number");
+        } catch (e) {
+            alert("The result of your equation is invalid. Please check your calculations.");
+            this.userHeightFunction = null;
+            return false;
+        }
+
+        return true;
     }
 
-    update(dt) {
-        if (this.isLanding && this.currentHeight > 0) {
-            // height = set_height - time, so height decreases consistently over time (t)
-            this.time += dt / 1000;  // Convert time to seconds
-            this.currentHeight = this.setHeight - this.time;
+    handleDerivativeSubmit() {
+        const derivativeEquationInput = this.positionUpdateCode;
 
-            // Simulate the landing when height reaches 0
-            if (this.currentHeight <= 0) {
-                this.currentHeight = 0;
-                this.isLanding = false;
-                this.messageContainer.innerText = "Drone has landed successfully!";
+        // Normalize variable names for user flexibility
+        let normalizedInput = derivativeEquationInput
+        .replace(/\bhover[ _]?thrust\b/ig, 'hover_thrust')
+        .replace(/\berror\b/ig, 'error')
+        .replace(/derivative\s*\(\s*error\s*\)/ig, 'derivative_error');
+
+        // Check for required variables
+        if (!/\berror\b/.test(normalizedInput) || !/\bderivative_error\b/.test(normalizedInput)) {
+            alert("The equation must include both 'error' and 'derivative(error)'. Please try again.");
+            return false;
+        }
+
+        // Try to compile and test the function
+        try {
+            this.userDerivativeFunction = new Function('error', 'derivative_error', 'hover_thrust', 'return (' + normalizedInput + ');');
+        } catch (e) {
+            alert("Please input a valid equation for the derivative thrust.");
+            this.userDerivativeFunction = null;
+            return false;
+        }
+
+        // Test the function with sample values
+        const testError = 10;
+        const testDerivative = 2; // Simulated test derivative value
+        const testHoverThrust = this.drone.mass * this.drone.gravity;
+        let testResult;
+
+        try {
+            testResult = this.userDerivativeFunction(testError, testDerivative, testHoverThrust);
+            if (isNaN(testResult)) {
+                throw new Error("Result is not a number");
             }
+        } catch (e) {
+            alert("Invalid derivative equation. Please ensure it is a valid equation and try again.");
+            this.userDerivativeFunction = null;
+            return false;
         }
+        return true;
+    }
+
+    wrongAnswer() {
+        //determine what is wrong with answer and give feedback
+        alert('Equation does not match reality. Please try again.');
+    }
+
+    nextPhase() {
+        this.phase++;
+        this.managePhases(); 
+    }
+
+    getInitialInfoText() {
+        return `<p>In order to land the drone, we cannot simply set the desired height to the ground. Instead, we must slowly lower the desired height so that the drone sets down on the ground in a controlled manner. Set the desired height to half of the current height.</p>`;
     }
 
     draw(ctx) {
-        // Clear canvas
         ctx.clearRect(0, 0, this.game.canvas.width, this.game.canvas.height);
         this.game.drawBackground();
-
-        // Draw the dashed red line following the mouse
-        if (!this.isHeightSet) {
-            ctx.setLineDash([5, 5]);
-            ctx.strokeStyle = 'red';
-            ctx.beginPath();
-            ctx.moveTo(0, this.dashedLineY);
-            ctx.lineTo(this.game.canvas.width, this.dashedLineY);
-            ctx.stroke();
-            ctx.setLineDash([]);  // Reset line dash to solid
-        }
-
-        // Draw the drone at the current height (after the height is set)
-        if (this.isHeightSet) {
-            ctx.drawImage(this.droneImage, this.game.canvas.width / 2 - 30, this.game.canvas.height - this.currentHeight - 30, 60, 60);
-        }
+        this.game.drawDrone();
     }
 
-    cleanup() {
-        const container = document.getElementById('landingStageContainer');
-        container.innerHTML = ''; 
-        container.style.visibility = 'hidden'; 
+    displayVelocityAndPosition() {
+        this.displayDiv.innerHTML = `
+            <p>Velocity: ${this.drone.vy.toFixed(2)} m/s</p>
+            <p>Position: (${this.drone.x.toFixed(2)}, ${this.drone.y.toFixed(2)})</p>
+        `;
+    }
+
+    initSim() {
+        //initialize drone and other things
+        let stageDiv = this.stagediv;
+
+        stageDiv.removeChild(this.currentPhaseDiv);
+
+        this.drone.reset(); 
+        
+        this.lastTime = null; 
+        this.lastError = 0;
+    }
+
+    stepSim(time) {
+        // Initialize lastTime
+        if(this.lastTime == null) {
+            this.lastTime = time;
+            return;
+        }
+
+        // Calculate timestep
+        let dt = (time - this.lastTime) / 1000;
+
+        if(dt > 0.05){ // clamp huge dt
+            dt = 0.016;
+        }
+        this.lastTime = time;
+
+        this.desired_height = this.userHeightFunction(this.drone.y);
+
+        let error = this.desired_height - this.drone.y; // Error
+        let hover_thrust = -1 * this.drone.mass * this.drone.gravity; // Hover thrust
+        let derivative_error = (error - this.lastError) / dt;
+
+        let userThrust = [this.userDerivativeFunction(error, derivative_error, hover_thrust)];
+        this.drone.update(dt, userThrust);
+
+        // Update last error
+        this.lastError = error;
+    }
+
+    simComplete() {
+        //check if the simulation is complete and return a boolean
+        return this.drone.crashed;
+    }
+
+    objectiveReached(cbArray, currentStage) {
+        //check if the objective was reached after the simulation and return a boolean
+        return this.drone.crashed;
+    }
+
+    objectiveNotReached() {
+        alert("objective not reached");
+        this.stagediv.removeChild(this.displayDiv);
+        this.drone.reset();
+        this.managePhases();
     }
 }
 
-// Make Stage6 accessible globally
-window.Stage6 = Stage6;
+function getMountainHeightAt(x) {
+    return 0;
+}
+
+// Assign Stage1 to the global window object
+window.Stage1 = Stage1;

@@ -95,7 +95,7 @@ class Game {
         this.ctx.save();
         this.ctx.translate(this.drone.x * this.meter, this.canvas.height - (this.drone.y * this.meter));
         this.ctx.rotate(this.drone.angle);
-        this.ctx.drawImage(this.droneImage, -10, -75, 80, 80); // Adjust size and position as needed
+        this.ctx.drawImage(this.droneImage, -40, -40, 80, 80); // Adjust size and position as needed
         this.ctx.restore();
     }
 
