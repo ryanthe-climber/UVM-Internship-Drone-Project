@@ -35,6 +35,12 @@ class Drone {
         this.angularVelocity += this.angularAcceleration * dt;
         this.angle += this.angularVelocity * dt;
 
+        const maxAngle = Math.PI / 3;
+        this.angle = Math.max(
+            -maxAngle,
+            Math.min(maxAngle, this.angle)
+        );
+
         const cosA = Math.cos(this.angle);
         const sinA = Math.sin(this.angle);
 
@@ -96,6 +102,7 @@ class Drone {
         this.mass = 1;  // kg
         this.rotationalMass = 1;
         this.motorStrength = 10;  // max power
+        this.hover_thrust = -1 * this.mass * this.gravity;
         this.automatic = false;
         this.crashed = false; // New property to indicate if the drone has crashed
     }

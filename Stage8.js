@@ -265,15 +265,13 @@ class Stage8 {
         this.desired_height = (this.game.canvas.height / this.game.meter) - (this.mouseY / this.game.meter);
 
         let dx = (this.mouseX / this.game.meter) - this.drone.x;
-
         let dx_dot = (dx - this.last_dx) / dt;
-        
-        this.desiredAngle = 1 * dx + 2 * dx_dot;
 
-        
+        // Desired horizontal acceleration
+        let ax_desired = 1 * dx + 2 * dx_dot;
 
-        const maxTilt = Math.PI / 5;
-        this.desiredAngle = Math.min(Math.max(this.desiredAngle, -maxTilt), maxTilt);
+        // Convert acceleration to tilt angle
+        this.desiredAngle = -1 * Math.atan(ax_desired / this.drone.gravity);
 
         let error = this.desired_height - this.drone.y;
 

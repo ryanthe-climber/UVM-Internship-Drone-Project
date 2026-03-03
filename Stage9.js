@@ -7,6 +7,10 @@ class Stage9 {
         this.phase = 0;
         this.step = 0;
 
+        this.obstacleX = game.canvas.width / 4;
+        this.obstacleY = game.canvas.height / 2;
+        this.obstacleradius = 0.5;
+
         this.stagediv = document.createElement("div");
         this.stagediv.setAttribute("id", "stage9div");
         this.stagediv.setAttribute("class", "stageDiv");
@@ -24,12 +28,12 @@ class Stage9 {
 
     managePhases() {
         switch(this.phase) {
-            case 0: game.stageExplainationDOM(this, this.stagediv, 'Welcome to Stage 7! Here you will learn how the drone moves by tilting and controlling the forces of the two motors.', "Start");
+            case 0: game.stageExplainationDOM(this, this.stagediv, 'Welcome to Stage 9! Here you will learn how to make the drone avoid obstacles', "Start");
                     break;
             case 1: this.phase1();
                     break;
 
-            default:this.game.endStage("Stage 7 Completed", "Stage 8 - FILL IN HERE", Stage8, this);
+            default:this.game.endStage("Stage 9 Completed", "Stage 10 - FILL IN HERE", Stage10, this);
                     this.stageEnded = true;
                     break;
         }
@@ -55,168 +59,6 @@ class Stage9 {
                     ]);
     }
 
-
-
-    desiredAngleTeachText() {
-        return `<p>For now, the desired angle will be the angle between a vertical line on the drone and your cursor.</p>
-                <p>Let's say that the cursor's coordinates are (x<sub>c</sub>, y<sub>c</sub>) and the drone's coordinates are (x<sub>d</sub>, y<sub>d</sub>). We can calculate the angle between them, θ, with:</p>
-                <p>θ = tan<sup>-1</sup>[(x<sub>c</sub> - x<sub>d</sub>) - (y<sub>c</sub> - y<sub>d</sub>)]</p>
-                <p>tan^-1((cursor_x - drone_x) / (cursor_y - drone_y))</p>`
-    }
-
-    drawTriangle(ctx) {
-        const droneX = this.drone.x * this.game.meter;
-        const droneY = this.game.canvas.height - (this.drone.y * this.game.meter);
-
-        // --- Draw right triangle legs ---
-        ctx.strokeStyle = 'rgba(255, 0, 0, 1)';
-        ctx.lineWidth = 2;
-
-        // Vertical leg
-        ctx.beginPath();
-        ctx.moveTo(droneX, droneY);
-        ctx.lineTo(droneX, this.mouseY);
-        ctx.stroke();
-
-        // Horizontal leg
-        ctx.beginPath();
-        ctx.moveTo(droneX, this.mouseY);
-        ctx.lineTo(this.mouseX, this.mouseY);
-        ctx.stroke();
-
-        // Hypotenuse
-        ctx.beginPath();
-        ctx.moveTo(droneX, droneY);
-        ctx.lineTo(this.mouseX, this.mouseY);
-        ctx.stroke();
-
-        // Calculate angle
-        const dx = this.mouseX - droneX;
-        const dy = this.mouseY - droneY;
-        const angleRad = Math.atan2(dx, -dy);
-        const angleDeg = (angleRad * 180 / Math.PI).toFixed(1);
-
-        // Draw arc
-        const arcRadius = 30;
-        const startAngle = -Math.PI / 2;
-        ctx.beginPath();
-        ctx.strokeStyle = 'rgba(0,255,0,0.9)';
-        ctx.lineWidth = 2;
-        ctx.arc(droneX, droneY, arcRadius, startAngle, startAngle + angleRad, angleRad < 0);
-        ctx.stroke();
-
-        // --- Draw angle label ---
-        const midAngle = startAngle + angleRad / 2;
-        const labelX = droneX + Math.cos(midAngle) * (arcRadius + 15);
-        const labelY = droneY + Math.sin(midAngle) * (arcRadius + 15);
-        ctx.fillStyle = '#fff';
-        ctx.font = '14px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText(`θ = ${angleDeg}°`, labelX, labelY);
-
-        // --- Draw leg labels ---
-        ctx.fillStyle = '#fff';
-        ctx.font = '14px Arial';
-        ctx.textAlign = 'center';
-
-        // Vertical leg label (adjacent, along vertical)
-        const vertLabelX = droneX - 40; // offset to the left
-        const vertLabelY = (droneY + this.mouseY) / 2;
-        ctx.fillText('adjacent = cursor_y - drone_y', vertLabelX, vertLabelY);
-
-        // Horizontal leg label (opposite, along horizontal)
-        const horizLabelX = (droneX + this.mouseX) / 2;
-        const horizLabelY = this.mouseY + 20; // offset below
-        ctx.fillText('opposite = cursor_x - drone_x', horizLabelX, horizLabelY);
-
-        // Hypotenuse label
-        const hypoLabelX = (droneX + this.mouseX) / 2 + 10;
-        const hypoLabelY = (droneY + this.mouseY) / 2 - 10;
-        ctx.fillText('hypotenuse', hypoLabelX, hypoLabelY);
-    }
-
-    angleErrorTeachText() {
-        return `<p>Once we know the desired angle, we can then find the angle error by simply subtracting the current angle from the desired angle.</p>
-                <p>desired_angle - current_angle</p>`
-    }
-
-    anglularVelocityTeachText() {
-        return `<p>
-                Angular velocity <i>ω</i> measures how fast an object is rotating, it’s the rate of change of its angle over time.
-                </p>
-                <p><b>ω = (θ(t) - θ(t - Δt)) / Δt</b></p>
-                <p>
-                Here, <i>θ</i> is the angle error, and <i>Δt</i> is the time interval.
-                </p>
-                <p>
-                Use the variables theta, previous_theta, and delta_time in your equation.
-                </p>`;
-    }
-
-    anglularAccellerationTeachText() {
-        return `<p>
-                Angular acceleration <i>α</i> is the change in angular velocity over time:
-                </p>
-                <p><b>α = (ω(t) - ω(t - Δt)) / Δt</b></p>
-                <p>
-                Use the variables omega, previous_omega, and delta_time in your equation.
-                </p>`
-    }
-
-    neededThrustTeachText() {
-        return `Let’s walk through how to determine the motor thrusts needed to create that torque and reach a desired angle.</p>
-                <p>
-                Substitute into the torque equation:
-                </p>
-                <p><b>L(F<sub>1</sub> - F<sub>2</sub>) = J(ω(t) - ω(t - Δt)) / Δt</b></p>
-                <p>or more compactly:</p>
-                <p><b>F<sub>1</sub> - F<sub>2</sub> = (JΔω) / (LΔt)</b></p>`
-    }
-
-    torqueTeachText() {
-        return `<p>When a drone tilts, it’s because a <b>torque</b> acts on it. </p>
-                <p>
-                Torque is related to the drone’s moment of inertia and its angular acceleration:
-                </p>
-                <p><b>τ = J · α</b></p>
-
-                <hr>
-
-                <p><b>Express torque in terms of motor forces:</b></p>
-                <p>
-                If two motors produce forces <i>F<sub>1</sub></i> and <i>F<sub>2</sub></i> at a distance <i>L</i> from the drone’s center:
-                </p>
-                <p><b>τ = L(F<sub>1</sub> - F<sub>2</sub>)</b></p>
-                <p>
-                Use the variables L, F1, F2, J, and angular_acceleration in your equation.
-                </p>`;
-    }
-
-    hoverThrustTeachText() {
-        return `<p><b>Hover Thrust:</b></p>
-                <p>
-                When hovering, both motors produce equal <i>hover thrust (HT)</i>. To tilt, we slightly increase one motor’s force and decrease the other by an amount <i>c</i>:
-                </p>
-                <p><b>F<sub>1</sub> = HT + c</b> <br> <b>F<sub>2</sub> = HT - c</b></p>
-
-                <p>Substitute these into <b>F<sub>1</sub> - F<sub>2</sub> = (JΔω) / (LΔt)</b>:</p>
-                <p><b>(HT + c) - (HT - c) = (JΔω) / (LΔt)</b></p>
-
-                <p>This simplifies to:</p>
-                <p><b>c = (JΔω) / (2LΔt)</b></p>
-
-                <hr>
-
-                <p><b>6. Account for tilt angle:</b></p>
-                <p>
-                Because the thrust vectors aren’t perfectly vertical when the drone is tilted, each force can be broken into components:
-                </p>
-                <p><b>F<sub>V</sub> = F · cosθ</b> &nbsp;&nbsp; (vertical component)<br>
-                <b>F<sub>H</sub> = F · sinθ</b> &nbsp;&nbsp; (horizontal component)</p>
-
-                <p>Here, <b>θ</b> is the <i>angle error</i> — the difference between the drone’s current and desired tilt angle.</p>`;
-    }
-
     nextPhase() {
         this.phase++;
         this.step = 0;
@@ -227,11 +69,24 @@ class Stage9 {
         this.managePhases();
     }
 
+    drawobstacle(ctx) {
+        ctx.beginPath();
+        ctx.arc(
+            this.obstacleX,
+            this.obstacleY,
+            this.obstacleradius * this.game.meter,
+            0,
+            Math.PI * 2
+        );
+        ctx.fillStyle = "rgba(255, 0, 0, 1)";
+        ctx.fill();
+    }
+
     draw(ctx) {
         ctx.clearRect(0, 0, this.game.canvas.width, this.game.canvas.height);
         this.game.drawBackground();
         this.game.drawDrone();
-        this.drawTriangle(ctx);
+        this.drawobstacle(ctx);
     }
 
 
@@ -246,10 +101,14 @@ class Stage9 {
         this.last_angle_error = 0;
         this.last_error = 0;
         this.last_dx = 0;
+        this.last_temp = 0;
+        this.desired_angle = 0;
+        this.last_y_error = 0;
+        this.last_x_error = 0;
+        this.last_angle_error = 0;
     }
 
     stepSim(time) {
-        //do one step of the simulation
         if(this.lastTime == null) {
             this.lastTime = time;
         }
@@ -260,39 +119,55 @@ class Stage9 {
             dt = 0.016;
         }
 
+
+        // VERTICAL
+        let y_desired = (this.game.canvas.height / this.game.meter) - (this.mouseY / this.game.meter);
+        let y_cursor_error = y_desired - this.drone.y;
+
+        // HORIZONTAL
+        let x_desired = this.mouseX / this.game.meter;
+        let x_cursor_error = x_desired - this.drone.x;
+
+
+        //OBSTACLE REPULSION
+
+        // Obstacle position in world coordinates
+        let obs_x = this.obstacleX / this.game.meter;
+        let obs_y = (this.game.canvas.height - this.obstacleY) / this.game.meter;
+
+        // Vector from obstacle to drone
+        let dx_obs = this.drone.x - obs_x;
+        let dy_obs = this.drone.y - obs_y;
+
+        let dist = Math.hypot(dx_obs, dy_obs) - this.obstacleradius;
+
+        // Repulsion parameters
+        let repulsionRadius = 1;   // meters
+
+
+
+        let strength = (1 / dist) - (1 / (this.obstacleradius + repulsionRadius));
         
-        this.desired_height = (this.game.canvas.height / this.game.meter) - (this.mouseY / this.game.meter);
-        /*
-        this.desiredAngle = Math.atan(((this.mouseX / this.game.meter) - this.drone.x) / (((this.game.canvas.height / this.game.meter) - (this.mouseY / this.game.meter)) - this.drone.y));
+        if (strength < 0) {strength = 0};
 
-        this.desiredAngle *= -1 * 0.1 * ((this.mouseX / this.game.meter) - this.drone.x);
+        let x_repulsion = dx_obs * strength;
+        let y_repulsion = dy_obs* strength;
 
-        if((((this.game.canvas.height / this.game.meter) - (this.mouseY / this.game.meter)) - this.drone.y) < 0) {
-            this.desiredAngle *= -1;
-        }
 
-        if(this.desiredAngle > Math.PI / 5) {
-            this.desiredAngle = Math.PI / 5;
-        } else if(this.desiredAngle < Math.PI / -5) {
-            this.desiredAngle = Math.PI / -5;
-        }
-        */
+        // COMBINED ERRORS
+        let x_error = x_cursor_error + x_repulsion;
+        let y_error = y_cursor_error + y_repulsion;
 
-        let dx = (this.mouseX / this.game.meter) - this.drone.x;
+        // Controllers
+        let vertical_thrust = 1 * y_error + 2 * ((y_error - this.last_y_error) / dt) + this.drone.hover_thrust;
 
-        let dx_dot = (dx - this.last_dx) / dt;
-        this.desiredAngle = 1 * dx + 2 * dx_dot;
+        // Desired horizontal acceleration
+        let ax_desired = 1 * x_error + 2 * (x_error - this.last_x_error) / dt;
 
-        const maxTilt = Math.PI / 5;
-        this.desiredAngle = Math.min(Math.max(this.desiredAngle, -maxTilt), maxTilt);
+        // Convert acceleration to tilt angle
+        this.desired_angle = -1 * Math.atan(ax_desired / this.drone.gravity);
 
-        let error = this.desired_height - this.drone.y;
-
-        let hover_thrust = -1 * this.drone.mass * this.drone.gravity;
-
-        let vertical_thrust = 1 * error + 2 * ((error - this.last_error) / dt) + hover_thrust;               
-
-        let angle_error = this.desiredAngle - this.drone.angle;
+        let angle_error = this.desired_angle - this.drone.angle;
 
         let torque = 1 * angle_error + (2 * (angle_error - this.last_angle_error)) / dt;
         
@@ -302,11 +177,33 @@ class Stage9 {
 
         this.drone.update(dt, thrustArray);
 
-        this.last_angle_error = angle_error;
-        this.last_error = error;
-        this.last_dx = dx;
 
-        console.log("Left Thrust: " + T1.toFixed(4) + "\nRight Thrust: " + T2.toFixed(4) + "\nAngle Error: " + (angle_error * (180/Math.PI)).toFixed(4) + "\nTorque: " + torque.toFixed(4) + "\nCurrent Angle: " + (this.drone.angle * (180/Math.PI)).toFixed(4) + "\nDesired Angle: " + (this.desiredAngle * (180/Math.PI)).toFixed(4))
+        //Save Variables
+        this.last_y_error = y_error;
+        this.last_x_error = x_error;
+        this.last_angle_error = angle_error;
+
+
+        console.log(
+            "-- Vertical (Y) --\n" +
+            "y_desired: " + y_desired.toFixed(3) + " m\n" +
+            "y_current: " + this.drone.y.toFixed(3) + " m\n" +
+            "y_error:   " + y_error.toFixed(3) + " m\n" +
+            "v_thrust:  " + vertical_thrust.toFixed(3) + " N\n\n" +
+
+            "-- Horizontal (X) --\n" +
+            "x_desired: " + x_desired.toFixed(3) + " m\n" +
+            "x_current: " + this.drone.x.toFixed(3) + " m\n" +
+            "x_error:   " + x_error.toFixed(3) + " m\n" +
+            "des_angle: " + (this.desired_angle * 180 / Math.PI).toFixed(2) + " deg\n" +
+            "current_angle: " + (this.drone.angle * 180 / Math.PI).toFixed(2) + " deg\n" +
+            "angle_error: " + (angle_error * 180 / Math.PI).toFixed(2) + " deg\n\n" +
+
+            "-- Repulsion --\n" +
+            "dist: " + dist.toFixed(3) + "\n" +
+            "x_repulsion: " + x_repulsion.toFixed(3) + "\n" +
+            "y_repulsion: " + y_repulsion.toFixed(3) 
+        );
     }
 
     simComplete() {
