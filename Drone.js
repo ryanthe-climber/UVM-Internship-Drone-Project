@@ -1,8 +1,9 @@
 class Drone {
     constructor(x, y, game) {
         this.game = game;
-        this.max_x = (this.game.canvas.width - this.game.droneImage.width) / this.game.meter; // meters
-        this.max_y = 10; //meters
+
+        this.max = this.game.toMeters({x: this.game.canvas.width - this.game.droneImage.width, y: 0});
+        this.max.y = 10;
         this.orig_x = x;
         this.orig_y = y;
         this.gravity = -3.728;
@@ -56,13 +57,13 @@ class Drone {
 
         // Check collision with mountains
 
-        if (this.y < getMountainHeightAt(this.x)) { //REWRITE TO CHECK IF DRONE IS OFF SCREEN
-            this.y = getMountainHeightAt(this.x);
+        if (this.y < 0) { //REWRITE TO CHECK IF DRONE IS OFF SCREEN
+            this.y = 0;
             this.crash();
         }
     
-        if(this.x > this.max_x) {
-            this.x = this.max_x;
+        if(this.x > this.max.x) {
+            this.x = this.max.x;
             this.crash();
         }
 
@@ -71,7 +72,7 @@ class Drone {
             this.crash();
         }
         
-        if(this.y > this.max_y) {
+        if(this.y > this.max.y) {
             this.y = 0;
             this.crash();
         }

@@ -5,8 +5,11 @@ class Game {
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
         this.world_height = 10;
+
+
+        this.groundOffset = 100;
         
-        this.meter = (this.canvas.height - 60) / this.world_height; //assume the screen height is 10 meters
+        this.meter = (this.canvas.height - this.groundOffset) / this.world_height; //assume the screen height is 10 meters
 
         this.droneImage = new Image();
         this.droneImage.src = 'pics/drone.png'; // Ensure this path is correct
@@ -29,7 +32,27 @@ class Game {
             }
         });
 
+        window.addEventListener('mousemove', e => {
+            this.mouse = this.toMeters({x: e.clientX, y: e.clientY});
+        });
+
     }
+
+    toMeters(pixelPoint) {
+
+        let meterPoint = {x: pixelPoint.x / this.meter, 
+                          y: (this.canvas.height - this.groundOffset - pixelPoint.y) / this.meter};
+        return meterPoint;
+    }
+
+    toPixels(meterPoint) {
+
+        let pixelPoint = {x: meterPoint.x * this.meter, 
+                          y: this.canvas.height - this.groundOffset - (meterPoint.y * this.meter)};
+        return pixelPoint;
+    }
+
+
 
     startStage(stageClass) {
         this.currentStage = new stageClass(this); // Pass `this` as the `game` argument
@@ -92,10 +115,90 @@ class Game {
     }
 
     drawDrone() {
+        this.drawShadow(this.drone);
+
+        let droneCoords = this.toPixels(this.drone);
+
         this.ctx.save();
-        this.ctx.translate(this.drone.x * this.meter, this.canvas.height - (this.drone.y * this.meter));
+        this.ctx.translate(droneCoords.x, droneCoords.y);
         this.ctx.rotate(this.drone.angle);
         this.ctx.drawImage(this.droneImage, -40, -40, 80, 80); // Adjust size and position as needed
+        this.ctx.restore();
+    }
+
+    drawShadowold() {
+        const drone = this.drone;
+
+        // Light source in canvas pixels (top-right, off-screen)
+        const lightX = this.canvas.width * 0.7;
+        const lightY = -this.canvas.height * 2;
+
+        // Drone position in canvas pixels
+
+        let dronePixels = this.toPixels(this.drone);
+
+        // Ground Y in canvas pixels at the drone's X position
+        const groundWorldY = 0;
+        const groundCanvasY = this.canvas.height - (groundWorldY * this.meter);
+
+        // Parametric ray: find t where ray hits the ground
+        // ray: P(t) = light + t * (drone - light)
+        const t = (groundCanvasY - lightY) / (dronePixels.y - lightY);
+
+        // Shadow center position
+        const shadowX = lightX + t * (dronePixels.x - lightX);
+        const shadowY = groundCanvasY;
+
+        // Shadow scale: larger/longer when drone is high above ground
+        const heightAboveGround = drone.y - groundWorldY; // in meters
+        const maxHeight = drone.max_y;
+        const stretch = 1 + (heightAboveGround / maxHeight) * 3; // 1x to 4x stretch
+        const opacity = 0.5 - (heightAboveGround / maxHeight) * 0.4; // fades with height
+
+        // Shadow is an ellipse stretched in the light direction
+        const dx = dronePixels.x - lightX;
+        const dy = dronePixels.y - lightY;
+        const angle = Math.atan2(dy, dx); // angle of the light ray
+
+        this.ctx.save();
+        this.ctx.translate(shadowX, shadowY);
+        this.ctx.rotate(angle);
+        this.ctx.scale(stretch, 1); // stretch along the ray direction
+        this.ctx.beginPath();
+        this.ctx.ellipse(0, 0, 20, 8, 0, 0, Math.PI * 2);
+        this.ctx.fillStyle = `rgba(0, 0, 0, ${Math.max(0, opacity)})`;
+        this.ctx.fill();
+        this.ctx.restore();
+    }
+
+    drawShadow(thing) {
+        const light = {x: this.drone.max.x * 0.7, y: 20}
+
+        const t = (-1 * light.y) / (thing.y - light.y);
+
+        const shadow = {x: light.x + t * (thing.x - light.x), y: 0}
+
+        const heightAboveGround = thing.y; // in meters
+        const maxHeight = this.drone.max.y;
+        const stretch = 1 + (heightAboveGround / maxHeight) * 2; // 1x to 4x stretch
+        const opacity = 0.5 - (heightAboveGround / maxHeight) * 0.4; // fades with height
+
+        const dx = thing.x - light.x;
+        const dy = thing.y - light.y;
+        const angle = Math.atan2(dy, dx); // angle of the light ray
+
+
+        this.ctx.save();
+
+        const shadowPixels = this.toPixels(shadow);
+
+        this.ctx.translate(shadowPixels.x, shadowPixels.y);
+        this.ctx.rotate(angle);
+        this.ctx.scale(stretch, 1); // stretch along the ray direction
+        this.ctx.beginPath();
+        this.ctx.ellipse(0, 0, 20, 8, 0, 0, Math.PI * 2);
+        this.ctx.fillStyle = `rgba(0, 0, 0, ${Math.max(0, opacity)})`;
+        this.ctx.fill();
         this.ctx.restore();
     }
 
@@ -143,10 +246,6 @@ class Game {
         };
         requestAnimationFrame(simloop);
     }
-
-
-
-
     
     input(dataArray, currentStage, phaseDiv, stepArray, stagediv, nextStep) {
              //[prompt, placeHolder, Button]

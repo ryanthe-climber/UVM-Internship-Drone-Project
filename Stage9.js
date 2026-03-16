@@ -18,11 +18,6 @@ class Stage9 {
         this.gameContent = document.getElementById("gameContent");
         gameContent.appendChild(this.stagediv);
 
-        window.addEventListener('mousemove', e => {
-            this.mouseX = e.clientX;
-            this.mouseY = e.clientY;
-        });
-
         this.managePhases();
     }
 
