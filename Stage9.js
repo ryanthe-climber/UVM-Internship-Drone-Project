@@ -7,8 +7,21 @@ class Stage9 {
         this.phase = 0;
         this.step = 0;
 
-        this.obstacleX = game.canvas.width / 4;
-        this.obstacleY = game.canvas.height / 2;
+        this.obstacleList = [
+            game.toMeters({
+                x: game.canvas.width * 0.2, 
+                y: game.canvas.height / 2
+            }), 
+            game.toMeters({
+                x: game.canvas.width * 0.7, 
+                y: game.canvas.height / 2
+            }), 
+            game.toMeters({
+                x: game.canvas.width * 0.8, 
+                y: game.canvas.height / 2
+            })
+        ]
+
         this.obstacleradius = 0.5;
 
         this.stagediv = document.createElement("div");
@@ -64,24 +77,28 @@ class Stage9 {
         this.managePhases();
     }
 
-    drawobstacle(ctx) {
-        ctx.beginPath();
-        ctx.arc(
-            this.obstacleX,
-            this.obstacleY,
-            this.obstacleradius * this.game.meter,
-            0,
-            Math.PI * 2
-        );
-        ctx.fillStyle = "rgba(255, 0, 0, 1)";
-        ctx.fill();
+    drawobstacles(ctx) {
+        this.obstacleList.forEach(obstacle => {
+            const obstaclePixels = this.game.toPixels(obstacle);
+
+            ctx.beginPath();
+            ctx.arc(
+                obstaclePixels.x,
+                obstaclePixels.y,
+                this.obstacleradius * this.game.meter,
+                0,
+                Math.PI * 2
+            );
+            ctx.fillStyle = "rgba(255, 0, 0, 1)";
+            ctx.fill();
+        });
     }
 
     draw(ctx) {
         ctx.clearRect(0, 0, this.game.canvas.width, this.game.canvas.height);
         this.game.drawBackground();
         this.game.drawDrone();
-        this.drawobstacle(ctx);
+        this.drawobstacles(ctx);
     }
 
 
@@ -93,14 +110,14 @@ class Stage9 {
         this.drone.reset(); 
         
         this.lastTime = null; 
-        this.last_angle_error = 0;
-        this.last_error = 0;
-        this.last_dx = 0;
-        this.last_temp = 0;
+
         this.desired_angle = 0;
-        this.last_y_error = 0;
-        this.last_x_error = 0;
-        this.last_angle_error = 0;
+
+        this.lastError = {
+            x: 0,
+            y: 0,
+            angle: 0
+        };
     }
 
     stepSim(time) {
@@ -114,57 +131,72 @@ class Stage9 {
             dt = 0.016;
         }
 
+        let lowDist = 100;
+        let obstacle = null;
 
-        // VERTICAL
-        let y_desired = (this.game.canvas.height / this.game.meter) - (this.mouseY / this.game.meter);
-        let y_cursor_error = y_desired - this.drone.y;
+        let dx_obs = 0;
+        let dy_obs = 0;
 
-        // HORIZONTAL
-        let x_desired = this.mouseX / this.game.meter;
-        let x_cursor_error = x_desired - this.drone.x;
+        this.obstacleList.forEach(current => {
+            const obs_dx = this.drone.x - current.x;
+            const obs_dy = this.drone.y - current.y;
 
+            const dist = Math.hypot(obs_dx, obs_dy) - this.obstacleradius;
+            if (dist < lowDist) {
+                lowDist = dist;
+                obstacle = current;
+
+                dx_obs = obs_dx;
+                dy_obs = obs_dy;
+            }
+        });
+
+        const desired = {
+            x: this.game.mouse.x, 
+            y: this.game.mouse.y
+        };
+
+        const cursor_error = {
+            x: desired.x - this.drone.x, 
+            y: desired.y - this.drone.y
+        };
 
         //OBSTACLE REPULSION
 
-        // Obstacle position in world coordinates
-        let obs_x = this.obstacleX / this.game.meter;
-        let obs_y = (this.game.canvas.height - this.obstacleY) / this.game.meter;
-
-        // Vector from obstacle to drone
-        let dx_obs = this.drone.x - obs_x;
-        let dy_obs = this.drone.y - obs_y;
-
-        let dist = Math.hypot(dx_obs, dy_obs) - this.obstacleradius;
 
         // Repulsion parameters
-        let repulsionRadius = 1;   // meters
+        const repulsionRadius = 1;   // meters
 
 
 
-        let strength = (1 / dist) - (1 / (this.obstacleradius + repulsionRadius));
+        let strength = (1 / lowDist) - (1 / (this.obstacleradius + repulsionRadius));
         
         if (strength < 0) {strength = 0};
 
-        let x_repulsion = dx_obs * strength;
-        let y_repulsion = dy_obs* strength;
+        const repulsion = {
+            x: dx_obs * strength,
+            y: dy_obs * strength
+        };
 
 
         // COMBINED ERRORS
-        let x_error = x_cursor_error + x_repulsion;
-        let y_error = y_cursor_error + y_repulsion;
+        const error = {
+            x: cursor_error.x + repulsion.x,
+            y: cursor_error.y + repulsion.y
+        };
 
         // Controllers
-        let vertical_thrust = 1 * y_error + 2 * ((y_error - this.last_y_error) / dt) + this.drone.hover_thrust;
+        let vertical_thrust = 1 * error.y + 2 * ((error.y - this.lastError.y) / dt) + this.drone.hover_thrust;
 
         // Desired horizontal acceleration
-        let ax_desired = 1 * x_error + 2 * (x_error - this.last_x_error) / dt;
+        let ax_desired = 1 * error.x + 2 * (error.x - this.lastError.x) / dt;
 
         // Convert acceleration to tilt angle
         this.desired_angle = -1 * Math.atan(ax_desired / this.drone.gravity);
 
         let angle_error = this.desired_angle - this.drone.angle;
 
-        let torque = 1 * angle_error + (2 * (angle_error - this.last_angle_error)) / dt;
+        let torque = 1 * angle_error + (2 * (angle_error - this.lastError.angle)) / dt;
         
         let T1 = vertical_thrust/(2 * Math.cos(this.drone.angle)) + torque/2;
         let T2 = vertical_thrust/(2 * Math.cos(this.drone.angle)) - torque/2;
@@ -174,30 +206,31 @@ class Stage9 {
 
 
         //Save Variables
-        this.last_y_error = y_error;
-        this.last_x_error = x_error;
-        this.last_angle_error = angle_error;
-
+        this.lastError = {
+                    x: error.x,
+                    y: error.y,
+                    angle: angle_error
+                }
 
         console.log(
             "-- Vertical (Y) --\n" +
-            "y_desired: " + y_desired.toFixed(3) + " m\n" +
+            "y_desired: " + desired.y.toFixed(3) + " m\n" +
             "y_current: " + this.drone.y.toFixed(3) + " m\n" +
-            "y_error:   " + y_error.toFixed(3) + " m\n" +
+            "y_error:   " + error.y.toFixed(3) + " m\n" +
             "v_thrust:  " + vertical_thrust.toFixed(3) + " N\n\n" +
 
             "-- Horizontal (X) --\n" +
-            "x_desired: " + x_desired.toFixed(3) + " m\n" +
+            "x_desired: " + desired.x.toFixed(3) + " m\n" +
             "x_current: " + this.drone.x.toFixed(3) + " m\n" +
-            "x_error:   " + x_error.toFixed(3) + " m\n" +
+            "x_error:   " + error.x.toFixed(3) + " m\n" +
             "des_angle: " + (this.desired_angle * 180 / Math.PI).toFixed(2) + " deg\n" +
             "current_angle: " + (this.drone.angle * 180 / Math.PI).toFixed(2) + " deg\n" +
             "angle_error: " + (angle_error * 180 / Math.PI).toFixed(2) + " deg\n\n" +
 
             "-- Repulsion --\n" +
-            "dist: " + dist.toFixed(3) + "\n" +
-            "x_repulsion: " + x_repulsion.toFixed(3) + "\n" +
-            "y_repulsion: " + y_repulsion.toFixed(3) 
+            "dist: " + lowDist.toFixed(3) + "\n" +
+            "x_repulsion: " + repulsion.x.toFixed(3) + "\n" +
+            "y_repulsion: " + repulsion.y.toFixed(3) 
         );
     }
 
