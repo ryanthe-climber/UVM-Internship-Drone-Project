@@ -48,48 +48,43 @@ class Stage3 {
     phase1() {
         this.currentPhaseDiv = this.game.createPhaseDom2(this,
                     this.stagediv,
-
                     [
-                        /*Teaching Step*/[
-                                            this.teachingLineClick,
-                                            ["Click on the dotted red line to set the desired altitude, and the drone will adjust its thrust accordingly.",
-                                             "The difference between the current height and desired height is the error. Write an equation for error with the variables current_height and desired_height.     desired_height - current_height"
-                                            ], 
-                                            () => true,
-                                            null, null
-                                        ],
-                        /*Error Input Step*/ [
-                                                this.game.input,
-                                                ["Error = ", "Enter calculated error", "Submit"],
-                                                this.checkErrorSubmit.bind(this), 
-                                                this.game.hint, 
-                                                "Hint: The error is the difference between the desired height and current height."
-                                            ]
+                        [this.game.createPhaseTeaching, this.errorPhysicsText(), () => true, null, null],
+                        [this.game.createPhaseTeaching, this.errorMathText(), () => true, null, null],
+                        [
+                            this.teachingLineClick,
+                            [
+                                "Click on the dotted red line to set the desired altitude.",
+                                this.errorCodeBridgeText()
+                            ], 
+                            () => true,
+                            null, null
+                        ],
+                        [
+                            this.game.input,
+                            ["Error = ", "Enter error equation", "Submit"],
+                            this.checkErrorSubmit.bind(this), 
+                            this.game.hint, 
+                            "Hint: Error is the gap between where you want to be and where you are. desired_height - current_height"
+                        ]
                     ]);
     }
-    
+
     phase2() {
         this.currentPhaseDiv = this.game.createPhaseDom2(
             this,
             this.stagediv,
-
             [
-                /*Teaching Step*/
-                [
-                    this.game.createPhaseTeaching,
-                    "Set the thrust using: (any number) * error + hover_thrust. Enter your thrust equation below.", 
-                    () => true,
-                    null, null
-                ],
-                /*Thrust Input Step*/
+                [this.game.createPhaseTeaching, this.proportionalPhysicsText(), () => true, null, null],
+                [this.game.createPhaseTeaching, this.proportionalMathText(), () => true, null, null],
+                [this.game.createPhaseTeaching, this.proportionalCodeBridgeText(), () => true, null, null],
                 [
                     this.game.input,
-                    ["Enter Thrust Equation (e.g., Kp * error + hover_thrust): ", "Enter Thrust Equation", "Submit Thrust Equation"], 
+                    ["Thrust = ", "e.g. Kp * error + hover_thrust", "Submit"],
                     this.handleThrustSubmit.bind(this),
                     this.game.hint, 
-                    "Hint: Enter Thrust Equation (e.g., Kp * error + hover_thrust)" //FIXME - add a real hint
+                    "Hint: Scale the error by some constant, then add hover_thrust to stay airborne. Try: 2 * error + hover_thrust"
                 ],
-                /*Simulation Step (oscillation)*/ 
                 [
                     this.game.simulateDrone,
                     [
@@ -108,22 +103,21 @@ class Stage3 {
         this.currentPhaseDiv = this.game.createPhaseDom2(
             this,
             this.stagediv,
-
             [
-                /*Derivative Input Step*/
+                [this.game.createPhaseTeaching, this.derivativePhysicsText(), () => true, null, null],
+                [this.game.createPhaseTeaching, this.derivativeMathText(), () => true, null, null],
+                [this.game.createPhaseTeaching, this.derivativeCodeBridgeText(), () => true, null, null],
                 [
                     this.game.input,
                     [
-                        "To stabilize the drone, we need to add a derivative term. Enter a new thrust equation with a derivative term (e.g., Kp * error + Kd * derivative(error) + hover_thrust).",
-                        "Enter Thrust Equation", 
-                        "Submit Thrust Equation"
+                        "Thrust = ",
+                        "e.g. Kp * error + Kd * derivative(error) + hover_thrust",
+                        "Submit"
                     ], 
                     this.handleDerivativeSubmit.bind(this),
                     this.game.hint, 
-                    "Hint: idk man figure it out" //FIXME - add a real hint
+                    "Hint: Add a term that uses derivative(error) to slow the drone down as it approaches the target. Try: 2 * error + 3 * derivative(error) + hover_thrust"
                 ],
-
-                /*Simulation Step (stable)*/ 
                 [
                     this.game.simulateDrone,
                     [
@@ -137,6 +131,96 @@ class Stage3 {
                 ]
             ]);
     }
+
+    // --- Phase 1: Error ---
+
+    errorPhysicsText() {
+        return `
+            <p>We want the drone to fly to a specific height. To do that, the drone needs to know <strong>how far off it is</strong> from where it should be.</p>
+            <p>That gap — the difference between the target and the current state — is called the <strong>error</strong>. It's the fundamental input to almost every control system.</p>
+            <p>If the error is large, the drone is far from its target and needs to work hard. If the error is zero, the drone is exactly where it should be.</p>
+        `;
+    }
+
+    errorMathText() {
+        return `
+            <p>Error is simply the difference between where you <em>want</em> to be and where you <em>are</em>:</p>
+            <pre>error = desired_height - current_height</pre>
+            <p>Notice the order matters. If the drone is <em>below</em> the target, the error is <strong>positive</strong> — we need to go up. If it's above, the error is <strong>negative</strong> — we need to come down. The sign tells the controller which direction to push.</p>
+        `;
+    }
+
+    errorCodeBridgeText() {
+        return `
+            <h3>Turning Math into Code</h3>
+            <p>You have two variables available:</p>
+            <ul>
+                <li><code>desired_height</code>: the altitude you set by clicking the line</li>
+                <li><code>current_height</code>: the drone's actual altitude right now</li>
+            </ul>
+            <p>Write the right hand side of the error equation using those two variables.</p>
+        `;
+    }
+
+    // --- Phase 2: Proportional Control ---
+
+    proportionalPhysicsText() {
+        return `
+            <p>Now that we can measure error, we can use it to adjust thrust. The simplest approach: apply more thrust the further the drone is from its target.</p>
+            <p>This is called a <strong>proportional controller</strong> — the correction is proportional to the error. Double the error, double the push.</p>
+        `;
+    }
+
+    proportionalMathText() {
+        return `
+            <p>We scale the error by a constant <em>Kp</em> (the proportional gain) and add it on top of hover thrust:</p>
+            <pre>thrust = Kp × error + hover_thrust</pre>
+            <p>The <code>hover_thrust</code> term keeps the drone airborne. The <code>Kp × error</code> term pushes it toward the target.</p>
+        `;
+    }
+
+    proportionalCodeBridgeText() {
+        return `
+            <h3>Turning Math into Code</h3>
+            <p>You have these variables available:</p>
+            <ul>
+                <li><code>error</code>: the gap between desired and current height</li>
+                <li><code>hover_thrust</code>: the baseline thrust to stay airborne</li>
+            </ul>
+            <p>Choose any number for <em>Kp</em> — it controls how aggressively the drone responds. Write the right hand side of the thrust equation.</p>
+        `;
+    }
+
+    // --- Phase 3: Derivative Control ---
+
+    derivativePhysicsText() {
+        return `
+            <p>The proportional controller overshoots because it only looks at <em>where</em> the drone is, not <em>how fast</em> it's moving. It has no brakes.</p>
+            <p>The fix is to add a <strong>derivative term</strong> — a correction based on how quickly the error is changing. If the drone is approaching the target fast, we reduce thrust early to slow it down before it overshoots.</p>
+            <p>Together, proportional + derivative is called a <strong>PD controller</strong>. It's one of the most widely used control strategies in engineering.</p>
+        `;
+    }
+
+    derivativeMathText() {
+        return `
+            <p>The derivative of error is the rate at which the error is changing over time — in other words, how fast the gap is closing (or growing):</p>
+            <pre>d(error)/dt = (error - previous_error) / Δt</pre>
+            <p>We scale that by a constant <em>Kd</em> and add it to the thrust equation:</p>
+            <pre>thrust = Kp × error + Kd × d(error)/dt + hover_thrust</pre>
+        `;
+    }
+
+    derivativeCodeBridgeText() {
+        return `
+            <h3>Turning Math into Code</h3>
+            <p>The simulation computes the derivative of error for you. You can reference it with:</p>
+            <ul>
+                <li><code>derivative(error)</code>: the rate of change of error</li>
+            </ul>
+            <p>You still have access to <code>error</code> and <code>hover_thrust</code>. Add the derivative term to your previous equation and choose a value for <em>Kd</em>.</p>
+        `;
+    }
+
 
     teachingLineClick(infoTextArray, currentStage, phaseDiv, stepArray, stagediv, nextStep) {
         //Click on the dotted red line to set the desired altitude, then click "Submit Height" to continue.
@@ -442,7 +526,7 @@ class Stage3 {
                 this.oscillationDiv.setAttribute("id", "oscillationDiv");
                 this.oscillationDiv.setAttribute("class", "textDiv");
                 
-                this.oscillationDiv.appendChild(document.createTextNode("The drone is oscillating because it still has velocity. Let’s stabilize it by adding a derivative term."));
+                this.oscillationDiv.appendChild(document.createTextNode("The problem: when the drone reaches the target, it still has velocity. It overshoots, the error flips sign, the thrust reverses — and the drone oscillates back and forth indefinitely."));
 
                 let button = document.createElement("button");
                 button.setAttribute("id", "stabilizeButton");

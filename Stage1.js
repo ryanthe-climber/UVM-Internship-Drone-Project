@@ -33,29 +33,66 @@ class Stage1 {
         this.currentPhaseDiv = this.game.createPhaseDom2(this,
                     this.stagediv,
                     [
-                        /*Teaching Step*/[this.game.createPhaseTeaching, this.getInitialInfoText(), () => true, null, null],
+                        /*Physics Teaching Step*/
+                        [this.game.createPhaseTeaching, this.physicsText(), () => true, null, null],
+
+                        /*Math Teaching Step*/
+                        [this.game.createPhaseTeaching, this.mathText(), () => true, null, null],
+
+                        /*Code Bridge Teaching Step*/
+                        [this.game.createPhaseTeaching, this.codeBridgeText(), () => true, null, null],
 
                         /*Input Step*/
-                                    [   
-                                        this.game.input,
-                                        ["current_height = ", "Enter position equation", "Submit"],
-                                        this.validateUserCode.bind(this), 
-                                        this.game.hint, 
-                                        "Hint: Think about the relationship between position and velocity. Use the variables previous_height, velocity, and time."
-                                    ],
+                        [   
+                            this.game.input,
+                            ["current_height = ", "Enter position equation", "Submit"],
+                            this.validateUserCode.bind(this), 
+                            this.game.hint, 
+                            "Hint: Remember the math: position = previous_position + velocity × Δt`</p>"
+                        ],
+
                         /*Simulation Step*/
-                                    [
-                                        this.game.simulateDrone, 
-                                        [
-                                            this.initSim.bind(this), 
-                                            this.stepSim.bind(this), 
-                                            this.simComplete.bind(this), 
-                                        ],
-                                        this.objectiveReached.bind(this),
-                                        null,
-                                        null
-                                    ]
+                        [
+                            this.game.simulateDrone, 
+                            [
+                                this.initSim.bind(this), 
+                                this.stepSim.bind(this), 
+                                this.simComplete.bind(this), 
+                            ],
+                            this.objectiveReached.bind(this),
+                            null,
+                            null
+                        ]
                     ]);
+    }
+
+    physicsText() {
+        return `
+            <p>Right now, the drone's motors are off. The only force acting on it is <strong>gravity</strong>.</p>
+            <p>Because gravity is a force, it causes <strong>acceleration</strong>. This means that the drone doesn't just move down at a constant rate, it speeds up as it falls.</p>
+        `;
+    }
+
+    mathText() {
+        return `
+            <p>Acceleration is the rate of change of velocity. So if we know the acceleration and a small slice of time <em>Δt</em>, we can update velocity:</p>
+            <pre>velocity = previous_velocity + acceleration × Δt</pre>
+            <p>And velocity is the rate of change of position. So we can update position the same way:</p>
+            <pre>position = previous_position + velocity × Δt</pre>
+        `;
+    }
+
+    codeBridgeText() {
+        return `
+            <h3>Turning Math into Code</h3>
+            <p>In the simulation, <em>Δt</em> is called <code>time</code>, and the variables you have access to are:</p>
+            <ul>
+                <li><code>previous_height</code>: the drone's position from the last frame</li>
+                <li><code>velocity</code>: the drone's current vertical velocity</li>
+                <li><code>time</code>: the time elapsed since the last frame (Δt)</li>
+            </ul>
+            <p>Write the right hand side of the position equation using those variables.</p>
+        `;
     }
 
     validateUserCode() {
@@ -81,13 +118,6 @@ class Stage1 {
         this.managePhases(); 
     }
 
-    getInitialInfoText() {
-        return `<p>First, let’s first get started with understanding how the drone moves. Right now the drone is in free fall. That means the only force acting on the drone is gravity.</p>
-        <p>Acceleration is the change in velocity over time, also known as the derivative (Dv/Dt). So the equation for velocity is:</p>
-        <pre>velocity = previous_velocity + acceleration * time</pre>
-        <p>Similarly, velocity is the change in position. Using the variables current_height and previous_height, in addition to the ones above, enter the equation for current_height.</p>
-        <p><b>ANSWER:</b> previous_height + velocity * time</p>`;
-    }
 
     draw(ctx) {
         ctx.clearRect(0, 0, this.game.canvas.width, this.game.canvas.height);

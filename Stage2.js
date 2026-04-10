@@ -22,10 +22,11 @@ class Stage2 {
 
     managePhases() {
         switch(this.phase) {
-            case 0: game.stageExplainationDOM(  this, 
-                                                this.stagediv, 
-                                                "In this stage, we will be programming hover thrust. Hover thrust is how much force (in Newtons) must be applied to keep the drone hovering in the air without falling or moving upwards.  Click “Start Hover Thrust” to continue.", 
-                                                "Start Hover Thrust");
+             case 0: game.stageExplainationDOM(
+                    this, 
+                    this.stagediv, 
+                    "In this stage, we will program hover thrust — the force needed to keep the drone perfectly still in the air.", 
+                    "Start");
                     break;
 
             case 1: this.phase1();
@@ -36,25 +37,61 @@ class Stage2 {
         }
     }
 
+
+
     phase1() {
         this.currentPhaseDiv = this.game.createPhaseDom2(this,
                     this.stagediv,
                     [
-                        /*Teaching Step*/[
-                                            this.game.createPhaseTeaching,
-                                            "The top arrow represents the hover thrust, and the bottom arrow represents the force of gravity (mass * gravity). These quantities must be equal for the net force to be zero, which means the net acceleration is zero, and the drone hovers.\n\nGiven the variables mass and gravity, write the equation that represents the hover_thrust:	", 
-                                            () => true, null
-                                        ],
+                        /*Physics Teaching Step*/
+                        [this.game.createPhaseTeaching, this.physicsText(), () => true, null, null],
+
+                        /*Math Teaching Step*/
+                        [this.game.createPhaseTeaching, this.mathText(), () => true, null, null],
+
+                        /*Code Bridge Teaching Step*/
+                        [this.game.createPhaseTeaching, this.codeBridgeText(), () => true, null, null],
 
                         /*Input Step*/
-                                    [   
-                                        this.game.input,
-                                        ["hover_thrust = ", "Enter hover thrust equation", "Submit"],
-                                        this.validateUserCode.bind(this), 
-                                        this.game.hint, 
-                                        "Hint: The force that the drone exerts must be equal in magnitude to the force pulling downwards to have a net force of 0. Therefore, hover_thrust - mass * gravity = 0."
-                                    ]
+                        [   
+                            this.game.input,
+                            ["hover_thrust = ", "Enter hover thrust equation", "Submit"],
+                            this.validateUserCode.bind(this), 
+                            this.game.hint, 
+                            "Hint: The upward force must exactly cancel gravity. hover_thrust - mass * gravity = 0, so hover_thrust = ?"
+                        ]
                     ]);
+    }
+
+    physicsText() {
+        return `
+            <p>In Stage 1, the drone's motors were off, so gravity pulled it straight down. Now we want to keep the drone perfectly still in the air.</p>
+            <p>For the drone to hover, the upward push from the motors must exactly cancel the downward pull of gravity.</p>
+            <p>The two arrows on screen represent those two forces. Notice they point in opposite directions. We need them to be <strong>equal in size</strong>.</p>
+        `;
+    }
+
+    mathText() {
+        return `
+            <p>Newton's second law says: <strong>F = m × a</strong>. When the drone hovers, acceleration is zero, so net force must also be zero.</p>
+            <p>The two forces acting on the drone are thrust (upward) and gravity (downward):</p>
+            <pre>hover_thrust - mass × gravity = 0</pre>
+            <p>Rearranging to solve for hover_thrust:</p>
+            <pre>hover_thrust = mass × gravity</pre>
+            <p>Note: in this simulation, gravity is already stored as a negative number (since it pulls downward), so the math takes care of the sign for you.</p>
+        `;
+    }
+
+    codeBridgeText() {
+        return `
+            <h3>Turning Math into Code</h3>
+            <p>You have two variables available:</p>
+            <ul>
+                <li><code>mass</code>: the drone's mass in kilograms</li>
+                <li><code>gravity</code>: the gravitational acceleration on Mars (negative, since it points downward)</li>
+            </ul>
+            <p>Write the right hand side of the hover thrust equation using those variables.</p>
+        `;
     }
 
     validateUserCode() {
