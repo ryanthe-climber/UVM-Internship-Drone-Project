@@ -7,6 +7,18 @@ class Stage8 {
         this.phase = 0;
         this.step = 0;
 
+        this.obstacleList = [
+            game.toMeters({ x: game.canvas.width * 0.2, y: game.canvas.height / 2 }),
+            game.toMeters({ x: game.canvas.width * 0.7, y: game.canvas.height / 2 }),
+            game.toMeters({ x: game.canvas.width * 0.8, y: game.canvas.height / 2 })
+        ].map((obs, i) => ({
+            ...obs,
+            baseY: obs.y,
+            phaseOffset: (i / 3) * Math.PI * 2   // spreads them evenly around the cycle
+        }));
+
+        this.obstacleradius = 0.5;
+
         this.stagediv = document.createElement("div");
         this.stagediv.setAttribute("id", "stage8div");
         this.stagediv.setAttribute("class", "stageDiv");
@@ -14,32 +26,382 @@ class Stage8 {
         this.gameContent = document.getElementById("gameContent");
         gameContent.appendChild(this.stagediv);
 
-        window.addEventListener('mousemove', e => {
-            this.mouseX = e.clientX;
-            this.mouseY = e.clientY;
-        });
-
         this.managePhases();
     }
-
+    
     managePhases() {
         switch(this.phase) {
-            case 0: game.stageExplainationDOM(this, this.stagediv, 'Welcome to Stage 8! Here you will learn to combine vertical and horizontal movement to follow the cursor.', "Start");
+            case 0: game.stageExplainationDOM(this, this.stagediv, 'Welcome to Stage 8! Here you will learn how to make the drone avoid obstacles.', "Start");
                     break;
-            case 1: this.phase1();
+            case 1: this.phase1();  // What is obstacle avoidance? + distance
                     break;
-
-            default:this.game.endStage("Stage 8 Completed", "Stage 9 - FILL IN HERE", Stage8, this);
+            case 2: this.phase2();  // Repulsion strength
+                    break;
+            case 3: this.phase3();  // Combining repulsion with cursor error
+                    break;
+            case 4: this.phase4();  // Simulation
+                    break;
+ 
+            default: this.game.endStage("Stage 8 Completed", "GAME FINISHED", Stage10, this);
                     this.stageEnded = true;
                     break;
         }
     }
+ 
+    // ─── PHASE 1: Obstacle Avoidance + Distance ───────────────────────────────
+ 
+    phase1() {
+        this.currentPhaseDiv = this.game.createPhaseDom2(this,
+            this.stagediv,
+            [
+                /*Teaching: what is obstacle avoidance*/
+                [
+                    this.game.createPhaseTeaching,
+                    this.obstacleIntroTeachText(),
+                    () => true, null, null
+                ],
+ 
+                /*Teaching: distance to an obstacle*/
+                [
+                    this.game.createPhaseTeaching,
+                    this.distanceTeachText(),
+                    () => true, null, null
+                ],
+ 
+                /*Distance Input*/
+                [
+                    this.game.input,
+                    ["dist = ", "Enter equation for distance to an obstacle", "Submit"],
+                    this.validateDistance.bind(this),
+                    this.game.hint,
+                    "Hint: Use Math.hypot(dx, dy) to find the straight-line distance between two points, then subtract the obstacle's radius so the distance is measured from the obstacle's surface, not its centre."
+                ]
+            ]);
+    }
+ 
+    obstacleIntroTeachText() {
+        return `<p>In Stage 8, the drone could follow your cursor, but it had no idea that obstacles exist. If you moved the cursor behind a red ball, the drone would fly straight into it.</p>
+ 
+        <p>In this stage, we'll give the drone a sense of <b>self-preservation</b>. The idea is called a <b>repulsion field</b>: each obstacle pushes the drone away from itself, similar to how two magnets with matching poles repel each other.</p>
+ 
+        <p>The closer the drone gets to an obstacle, the <b>stronger</b> the push. Far enough away, the obstacle has <b>no effect at all</b>. We blend this repulsion force directly into the same error-based control system from Stage 8.</p>
+ 
+        <p>There are three things to figure out for each obstacle:</p>
+        <ol>
+            <li>How far away is the obstacle? (<b>distance</b>)</li>
+            <li>How hard should it push? (<b>repulsion strength</b>)</li>
+            <li>In which direction? (<b>repulsion vector</b>)</li>
+        </ol>`;
+    }
+ 
+    distanceTeachText() {
+        return `<p>First, we need the <b>distance</b> from the drone to each obstacle. We already know the drone's position <b>(drone_x, drone_y)</b> and the obstacle's position <b>(obs_x, obs_y)</b>.</p>
+ 
+        <p>The straight-line distance between two points uses the Pythagorean theorem:</p>
+        <pre>dist = sqrt(dx² + dy²)</pre>
+        <p>where <b>dx = drone_x − obs_x</b> and <b>dy = drone_y − obs_y</b>.</p>
+ 
+        <p>In JavaScript, <b>Math.hypot(dx, dy)</b> does exactly this calculation for you.</p>
+ 
+        <p>However, obstacles have a <b>radius</b>, so we measure distance from the <i>surface</i> of the obstacle, not its centre. That means we subtract the obstacle radius from the result:</p>
+        <pre>dist = Math.hypot(dx, dy) - obstacle_radius</pre>
+ 
+        <p>Enter the equation for <b>dist</b> using the variables <b>dx</b>, <b>dy</b>, and <b>obstacle_radius</b>.</p>`;
+    }
+ 
+    validateDistance() {
+        const code = this.positionUpdateCode;
+ 
+        const hasHypot = /Math\.hypot|sqrt|hypot/.test(code);
+        const hasDx    = /\bdx\b/.test(code);
+        const hasDy    = /\bdy\b/.test(code);
+        const hasRadius = /\bobstacle_radius\b/.test(code);
+ 
+        if (!hasDx || !hasDy) {
+            alert("Your equation must use the variables 'dx' and 'dy'. Please try again.");
+            return false;
+        }
+        if (!hasHypot) {
+            alert("Your equation should use Math.hypot(dx, dy) to calculate the straight-line distance. Please try again.");
+            return false;
+        }
+        if (!hasRadius) {
+            alert("Don't forget to subtract 'obstacle_radius' so the distance is measured from the obstacle's surface. Please try again.");
+            return false;
+        }
+ 
+        try {
+            const normalized = code.replace(/\bhypot\b/g, 'Math.hypot');
+            const fn = new Function('dx', 'dy', 'obstacle_radius', 'return (' + normalized + ');');
+            // drone at (3,4) from obstacle centre, radius 0.5 → dist = 5 - 0.5 = 4.5
+            const result = fn(3, 4, 0.5);
+            if (Math.abs(result - 4.5) > 0.05) {
+                alert("Incorrect. Check your equation: dist = Math.hypot(dx, dy) - obstacle_radius. Please try again.");
+                return false;
+            }
+        } catch(e) {
+            alert("Please enter a valid equation.");
+            return false;
+        }
+        return true;
+    }
+ 
+    // ─── PHASE 2: Repulsion Strength ──────────────────────────────────────────
+ 
+    phase2() {
+        this.currentPhaseDiv = this.game.createPhaseDom2(this,
+            this.stagediv,
+            [
+                /*Teaching: repulsion strength formula*/
+                [
+                    this.game.createPhaseTeaching,
+                    this.repulsionStrengthTeachText(),
+                    () => true, null, null
+                ],
+ 
+                /*Repulsion Strength Input*/
+                [
+                    this.game.input,
+                    ["strength = ", "Enter equation for repulsion strength", "Submit"],
+                    this.validateRepulsionStrength.bind(this),
+                    this.game.hint,
+                    "Hint: strength = (1 / dist) - (1 / (obstacle_radius + repulsion_radius)). If the result is negative, clamp it to 0 — we only want to push, never pull."
+                ]
+            ]);
+    }
+ 
+    repulsionStrengthTeachText() {
+        return `<p>Now that we know the distance, we need to compute the <b>repulsion strength</b> — how hard the obstacle pushes the drone away.</p>
+ 
+        <p>We want a force that:</p>
+        <ul>
+            <li>Gets <b>very large</b> as the drone approaches the obstacle surface (dist → 0)</li>
+            <li>Fades to <b>exactly zero</b> at a certain safe distance called the <b>repulsion radius</b></li>
+            <li>Has <b>no effect</b> beyond that safe distance</li>
+        </ul>
+ 
+        <p>A formula that does all three of these things is:</p>
+        <pre>strength = (1 / dist) - (1 / (obstacle_radius + repulsion_radius))</pre>
+ 
+        <p>When <b>dist</b> is large, the first term is small and eventually the whole expression goes negative. We clamp it at zero so obstacles only ever <b>push</b>, never pull:</p>
+        <pre>if (strength &lt; 0) { strength = 0; }</pre>
+ 
+        <p>Enter the equation for <b>strength</b> using the variables <b>dist</b>, <b>obstacle_radius</b>, and <b>repulsion_radius</b>. The clamping is handled for you after you submit.</p>`;
+    }
+ 
+    validateRepulsionStrength() {
+        const code = this.positionUpdateCode;
+ 
+        const hasDist   = /\bdist\b/.test(code);
+        const hasObsR   = /\bobstacle_radius\b/.test(code);
+        const hasRepR   = /\brepulsion_radius\b/.test(code);
+ 
+        if (!hasDist) {
+            alert("Your equation must use the variable 'dist'. Please try again.");
+            return false;
+        }
+        if (!hasObsR || !hasRepR) {
+            alert("Your equation must use 'obstacle_radius' and 'repulsion_radius'. Please try again.");
+            return false;
+        }
+ 
+        try {
+            const fn = new Function('dist', 'obstacle_radius', 'repulsion_radius', 'return (' + code + ');');
+            // At dist = obstacle_radius + repulsion_radius the strength should be 0
+            const result = fn(1.5, 0.5, 1.0);
+            if (Math.abs(result) > 0.05) {
+                alert("Incorrect. At exactly the repulsion boundary (dist = obstacle_radius + repulsion_radius), strength should equal 0. Check your formula.");
+                return false;
+            }
+            // Strength should be positive when closer than the repulsion radius
+            const closeResult = fn(0.6, 0.5, 1.0);
+            if (closeResult <= 0) {
+                alert("Incorrect. Strength should be positive when the drone is inside the repulsion radius. Check your formula.");
+                return false;
+            }
+        } catch(e) {
+            alert("Please enter a valid equation.");
+            return false;
+        }
+        return true;
+    }
+ 
+    // ─── PHASE 3: Combining Repulsion with Cursor Error ───────────────────────
+ 
+    phase3() {
+        this.currentPhaseDiv = this.game.createPhaseDom2(this,
+            this.stagediv,
+            [
+                /*Teaching: repulsion direction + combining with cursor error*/
+                [
+                    this.game.createPhaseTeaching,
+                    this.repulsionDirectionTeachText(),
+                    () => true, null, null
+                ],
+ 
+                /*Combined X Error Input*/
+                [
+                    this.game.input,
+                    ["combined_x_error = ", "Enter combined x error equation", "Submit"],
+                    this.validateCombinedX.bind(this),
+                    this.game.hint,
+                    "Hint: Add the cursor x error and the x component of the repulsion together: cursor_x_error + repulsion_x"
+                ],
+ 
+                /*Combined Y Error Input*/
+                [
+                    this.game.input,
+                    ["combined_y_error = ", "Enter combined y error equation", "Submit"],
+                    this.validateCombinedY.bind(this),
+                    this.game.hint,
+                    "Hint: Same idea vertically: cursor_y_error + repulsion_y"
+                ]
+            ]);
+    }
+ 
+    repulsionDirectionTeachText() {
+        return `<p>We know how <i>strongly</i> to push. Now we need to know in which <b>direction</b>.</p>
+ 
+        <p>The repulsion should point <b>directly away from the obstacle</b>. The vector pointing from the obstacle to the drone is simply <b>(dx, dy)</b> — the same values we used to compute distance. Multiplying by the strength scales that direction vector:</p>
+        <pre>repulsion_x = dx * strength
+repulsion_y = dy * strength</pre>
+ 
+        <p>We do this for every obstacle and <b>add all the repulsion vectors together</b>. If two obstacles are pushing in different directions, their contributions partially cancel — the drone threads between them naturally.</p>
+ 
+        <p>The final step is to <b>blend repulsion into the cursor error</b> from Stage 8. Instead of feeding raw cursor error into the controllers, we add the repulsion on top:</p>
+        <pre>combined_x_error = cursor_x_error + repulsion_x
+combined_y_error = cursor_y_error + repulsion_y</pre>
+ 
+        <p>The rest of the control system (vertical thrust, desired angle, torque, motor split) is <b>unchanged</b> from Stage 8 — it just receives this blended error instead of the raw cursor error.</p>
+ 
+        <p>Enter each combined error equation below using the variables <b>cursor_x_error</b> and <b>repulsion_x</b> (or <b>cursor_y_error</b> and <b>repulsion_y</b>).</p>`;
+    }
+ 
+    validateCombinedX() {
+        const code = this.positionUpdateCode;
+ 
+        const hasCursor    = /\bcursor_x_error\b/.test(code);
+        const hasRepulsion = /\brepulsion_x\b/.test(code);
+ 
+        if (!hasCursor || !hasRepulsion) {
+            alert("Your equation must use 'cursor_x_error' and 'repulsion_x'. Please try again.");
+            return false;
+        }
+ 
+        try {
+            const fn = new Function('cursor_x_error', 'repulsion_x', 'return (' + code + ');');
+            const result = fn(3, 1.5);
+            if (Math.abs(result - 4.5) > 0.05) {
+                alert("Incorrect. combined_x_error = cursor_x_error + repulsion_x. Please try again.");
+                return false;
+            }
+        } catch(e) {
+            alert("Please enter a valid equation.");
+            return false;
+        }
+        return true;
+    }
+ 
+    validateCombinedY() {
+        const code = this.positionUpdateCode;
+ 
+        const hasCursor    = /\bcursor_y_error\b/.test(code);
+        const hasRepulsion = /\brepulsion_y\b/.test(code);
+ 
+        if (!hasCursor || !hasRepulsion) {
+            alert("Your equation must use 'cursor_y_error' and 'repulsion_y'. Please try again.");
+            return false;
+        }
+ 
+        try {
+            const fn = new Function('cursor_y_error', 'repulsion_y', 'return (' + code + ');');
+            const result = fn(2, -0.5);
+            if (Math.abs(result - 1.5) > 0.05) {
+                alert("Incorrect. combined_y_error = cursor_y_error + repulsion_y. Please try again.");
+                return false;
+            }
+        } catch(e) {
+            alert("Please enter a valid equation.");
+            return false;
+        }
+        return true;
+    }
+ 
+    // ─── PHASE 4: Simulation ──────────────────────────────────────────────────
+ 
+    phase4() {
+        this.currentPhaseDiv = this.game.createPhaseDom2(this,
+            this.stagediv,
+            [
+                /*Teaching: sim intro*/
+                [
+                    this.game.createPhaseTeaching,
+                    this.simIntroTeachText(),
+                    () => true, null, null
+                ],
+ 
+                /*Simulation Step*/
+                [
+                    this.game.simulateDrone,
+                    [
+                        this.initSim.bind(this),
+                        this.stepSim.bind(this),
+                        this.simComplete.bind(this),
+                    ],
+                    this.objectiveReached.bind(this),
+                    null,
+                    null
+                ]
+            ]);
+    }
+ 
+    simIntroTeachText() {
+        return `<p>The full system is now in place:</p>
+        <ol>
+            <li>For each obstacle, compute <b>distance</b> from the drone to its surface.</li>
+            <li>Use the potential field formula to get a <b>repulsion strength</b> (zero beyond the safe radius).</li>
+            <li>Scale the direction vector <b>(dx, dy)</b> by the strength to get the repulsion contribution.</li>
+            <li>Sum all obstacle repulsions and <b>add to the cursor error</b>.</li>
+            <li>Feed the combined error into the same <b>three PD controllers</b> from Stage 8.</li>
+        </ol>
+        <p>Move your cursor around the screen. Try guiding the drone close to the red obstacles and watch it automatically steer away.</p>`;
+    }
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    /*
+    managePhases() {
+        switch(this.phase) {
+            case 0: game.stageExplainationDOM(this, this.stagediv, 'Welcome to Stage 8! Here you will learn how to make the drone avoid obstacles', "Start");
+                    break;
+            case 1: this.phase1();
+                    break;
+
+            default:this.game.endStage("Stage 8 Completed", "Stage 10 - FILL IN HERE", Stage10, this);
+                    this.stageEnded = true;
+                    break;
+        }
+    }
+    
 
     phase1() {
         this.currentPhaseDiv = this.game.createPhaseDom2(this,
                     this.stagediv,
                     [
-                        /*Simulation Step*/
+                        //Simulation Step
                                     [
                                         this.game.simulateDrone,
                                         [
@@ -53,168 +415,7 @@ class Stage8 {
                                     ]
                     ]);
     }
-
-
-
-    desiredAngleTeachText() {
-        return `<p>For now, the desired angle will be the angle between a vertical line on the drone and your cursor.</p>
-                <p>Let's say that the cursor's coordinates are (x<sub>c</sub>, y<sub>c</sub>) and the drone's coordinates are (x<sub>d</sub>, y<sub>d</sub>). We can calculate the angle between them, θ, with:</p>
-                <p>θ = tan<sup>-1</sup>[(x<sub>c</sub> - x<sub>d</sub>) - (y<sub>c</sub> - y<sub>d</sub>)]</p>
-                <p>tan^-1((cursor_x - drone_x) / (cursor_y - drone_y))</p>`
-    }
-
-    drawTriangle(ctx) {
-        const droneX = this.drone.x * this.game.meter;
-        const droneY = this.game.canvas.height - (this.drone.y * this.game.meter);
-
-        // --- Draw right triangle legs ---
-        ctx.strokeStyle = 'rgba(255, 0, 0, 1)';
-        ctx.lineWidth = 2;
-
-        // Vertical leg
-        ctx.beginPath();
-        ctx.moveTo(droneX, droneY);
-        ctx.lineTo(droneX, this.mouseY);
-        ctx.stroke();
-
-        // Horizontal leg
-        ctx.beginPath();
-        ctx.moveTo(droneX, this.mouseY);
-        ctx.lineTo(this.mouseX, this.mouseY);
-        ctx.stroke();
-
-        // Hypotenuse
-        ctx.beginPath();
-        ctx.moveTo(droneX, droneY);
-        ctx.lineTo(this.mouseX, this.mouseY);
-        ctx.stroke();
-
-        // Calculate angle
-        const dx = this.mouseX - droneX;
-        const dy = this.mouseY - droneY;
-        const angleRad = Math.atan2(dx, -dy);
-        const angleDeg = (angleRad * 180 / Math.PI).toFixed(1);
-
-        // Draw arc
-        const arcRadius = 30;
-        const startAngle = -Math.PI / 2;
-        ctx.beginPath();
-        ctx.strokeStyle = 'rgba(0,255,0,0.9)';
-        ctx.lineWidth = 2;
-        ctx.arc(droneX, droneY, arcRadius, startAngle, startAngle + angleRad, angleRad < 0);
-        ctx.stroke();
-
-        // --- Draw angle label ---
-        const midAngle = startAngle + angleRad / 2;
-        const labelX = droneX + Math.cos(midAngle) * (arcRadius + 15);
-        const labelY = droneY + Math.sin(midAngle) * (arcRadius + 15);
-        ctx.fillStyle = '#fff';
-        ctx.font = '14px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText(`θ = ${angleDeg}°`, labelX, labelY);
-
-        // --- Draw leg labels ---
-        ctx.fillStyle = '#fff';
-        ctx.font = '14px Arial';
-        ctx.textAlign = 'center';
-
-        // Vertical leg label (adjacent, along vertical)
-        const vertLabelX = droneX - 40; // offset to the left
-        const vertLabelY = (droneY + this.mouseY) / 2;
-        ctx.fillText('adjacent = cursor_y - drone_y', vertLabelX, vertLabelY);
-
-        // Horizontal leg label (opposite, along horizontal)
-        const horizLabelX = (droneX + this.mouseX) / 2;
-        const horizLabelY = this.mouseY + 20; // offset below
-        ctx.fillText('opposite = cursor_x - drone_x', horizLabelX, horizLabelY);
-
-        // Hypotenuse label
-        const hypoLabelX = (droneX + this.mouseX) / 2 + 10;
-        const hypoLabelY = (droneY + this.mouseY) / 2 - 10;
-        ctx.fillText('hypotenuse', hypoLabelX, hypoLabelY);
-    }
-
-    angleErrorTeachText() {
-        return `<p>Once we know the desired angle, we can then find the angle error by simply subtracting the current angle from the desired angle.</p>
-                <p>desired_angle - current_angle</p>`
-    }
-
-    anglularVelocityTeachText() {
-        return `<p>
-                Angular velocity <i>ω</i> measures how fast an object is rotating, it’s the rate of change of its angle over time.
-                </p>
-                <p><b>ω = (θ(t) - θ(t - Δt)) / Δt</b></p>
-                <p>
-                Here, <i>θ</i> is the angle error, and <i>Δt</i> is the time interval.
-                </p>
-                <p>
-                Use the variables theta, previous_theta, and delta_time in your equation.
-                </p>`;
-    }
-
-    anglularAccellerationTeachText() {
-        return `<p>
-                Angular acceleration <i>α</i> is the change in angular velocity over time:
-                </p>
-                <p><b>α = (ω(t) - ω(t - Δt)) / Δt</b></p>
-                <p>
-                Use the variables omega, previous_omega, and delta_time in your equation.
-                </p>`
-    }
-
-    neededThrustTeachText() {
-        return `Let’s walk through how to determine the motor thrusts needed to create that torque and reach a desired angle.</p>
-                <p>
-                Substitute into the torque equation:
-                </p>
-                <p><b>L(F<sub>1</sub> - F<sub>2</sub>) = J(ω(t) - ω(t - Δt)) / Δt</b></p>
-                <p>or more compactly:</p>
-                <p><b>F<sub>1</sub> - F<sub>2</sub> = (JΔω) / (LΔt)</b></p>`
-    }
-
-    torqueTeachText() {
-        return `<p>When a drone tilts, it’s because a <b>torque</b> acts on it. </p>
-                <p>
-                Torque is related to the drone’s moment of inertia and its angular acceleration:
-                </p>
-                <p><b>τ = J · α</b></p>
-
-                <hr>
-
-                <p><b>Express torque in terms of motor forces:</b></p>
-                <p>
-                If two motors produce forces <i>F<sub>1</sub></i> and <i>F<sub>2</sub></i> at a distance <i>L</i> from the drone’s center:
-                </p>
-                <p><b>τ = L(F<sub>1</sub> - F<sub>2</sub>)</b></p>
-                <p>
-                Use the variables L, F1, F2, J, and angular_acceleration in your equation.
-                </p>`;
-    }
-
-    hoverThrustTeachText() {
-        return `<p><b>Hover Thrust:</b></p>
-                <p>
-                When hovering, both motors produce equal <i>hover thrust (HT)</i>. To tilt, we slightly increase one motor’s force and decrease the other by an amount <i>c</i>:
-                </p>
-                <p><b>F<sub>1</sub> = HT + c</b> <br> <b>F<sub>2</sub> = HT - c</b></p>
-
-                <p>Substitute these into <b>F<sub>1</sub> - F<sub>2</sub> = (JΔω) / (LΔt)</b>:</p>
-                <p><b>(HT + c) - (HT - c) = (JΔω) / (LΔt)</b></p>
-
-                <p>This simplifies to:</p>
-                <p><b>c = (JΔω) / (2LΔt)</b></p>
-
-                <hr>
-
-                <p><b>6. Account for tilt angle:</b></p>
-                <p>
-                Because the thrust vectors aren’t perfectly vertical when the drone is tilted, each force can be broken into components:
-                </p>
-                <p><b>F<sub>V</sub> = F · cosθ</b> &nbsp;&nbsp; (vertical component)<br>
-                <b>F<sub>H</sub> = F · sinθ</b> &nbsp;&nbsp; (horizontal component)</p>
-
-                <p>Here, <b>θ</b> is the <i>angle error</i> — the difference between the drone’s current and desired tilt angle.</p>`;
-    }
+                    */
 
     nextPhase() {
         this.phase++;
@@ -226,11 +427,39 @@ class Stage8 {
         this.managePhases();
     }
 
+    drawobstacles(ctx) {
+        this.obstacleList.forEach(obstacle => {
+            this.game.drawShadow(obstacle);
+
+            const obstaclePixels = this.game.toPixels(obstacle);
+
+            ctx.beginPath();
+            ctx.arc(
+                obstaclePixels.x,
+                obstaclePixels.y,
+                this.obstacleradius * this.game.meter,
+                0,
+                Math.PI * 2
+            );
+            ctx.fillStyle = "rgba(255, 0, 0, 1)";
+            ctx.fill();
+        });
+    }
+
+    updateObstacles(time) {
+        const hoverSpeed = 0.5;   // cycles per second
+        const hoverHeight = 0.15; // meters
+
+        this.obstacleList.forEach(obs => {
+            obs.y = obs.baseY + Math.sin((time / 1000) * hoverSpeed * Math.PI * 2 + obs.phaseOffset) * hoverHeight;
+        });
+    }
+
     draw(ctx) {
         ctx.clearRect(0, 0, this.game.canvas.width, this.game.canvas.height);
         this.game.drawBackground();
         this.game.drawDrone();
-        //this.drawTriangle(ctx);
+        this.drawobstacles(ctx);
     }
 
 
@@ -242,15 +471,17 @@ class Stage8 {
         this.drone.reset(); 
         
         this.lastTime = null; 
-        this.last_angle_error = 0;
-        this.last_error = 0;
-        this.last_dx = 0;
-        this.last_temp = 0;
-        this.desiredAngle = 0;
+
+        this.desired_angle = 0;
+
+        this.lastError = {
+            x: 0,
+            y: 0,
+            angle: 0
+        };
     }
 
     stepSim(time) {
-        //do one step of the simulation
         if(this.lastTime == null) {
             this.lastTime = time;
         }
@@ -261,39 +492,96 @@ class Stage8 {
             dt = 0.016;
         }
 
-        
-        this.desired_height = (this.game.canvas.height / this.game.meter) - (this.mouseY / this.game.meter);
+        this.updateObstacles(time);
 
-        let dx = (this.mouseX / this.game.meter) - this.drone.x;
-        let dx_dot = (dx - this.last_dx) / dt;
+        //OBSTACLE REPULSION
+
+        const repulsion = {
+            x: 0,
+            y: 0
+        };
+
+        this.obstacleList.forEach(current => {
+            const dx_obs = this.drone.x - current.x;
+            const dy_obs = this.drone.y - current.y;
+
+            const dist = Math.hypot(dx_obs, dy_obs) - this.obstacleradius;
+
+            const repulsionRadius = 1;   // meters
+
+            let strength = (1 / dist) - (1 / (this.obstacleradius + repulsionRadius));
+            
+            if (strength < 0) {strength = 0};
+
+            repulsion.x += dx_obs * strength;
+            repulsion.y += dy_obs * strength;
+        });
+
+        const desired = {
+            x: this.game.mouse.x, 
+            y: this.game.mouse.y
+        };
+
+        const cursor_error = {
+            x: desired.x - this.drone.x, 
+            y: desired.y - this.drone.y
+        };
+
+
+        // COMBINED ERRORS
+        const error = {
+            x: cursor_error.x + repulsion.x,
+            y: cursor_error.y + repulsion.y
+        };
+
+        // Controllers
+        let vertical_thrust = 1 * error.y + 2 * ((error.y - this.lastError.y) / dt) + this.drone.hover_thrust;
 
         // Desired horizontal acceleration
-        let ax_desired = 1 * dx + 2 * dx_dot;
+        let ax_desired = 1 * error.x + 2 * (error.x - this.lastError.x) / dt;
 
         // Convert acceleration to tilt angle
-        this.desiredAngle = -1 * Math.atan(ax_desired / this.drone.gravity);
+        this.desired_angle = -1 * Math.atan(ax_desired / this.drone.gravity);
 
-        let error = this.desired_height - this.drone.y;
+        let angle_error = this.desired_angle - this.drone.angle;
 
-        let hover_thrust = -1 * this.drone.mass * this.drone.gravity;
-
-        let vertical_thrust = 1 * error + 2 * ((error - this.last_error) / dt) + hover_thrust;               
-
-        let angle_error = this.desiredAngle - this.drone.angle;
-
-        let torque = 1 * angle_error + (2 * (angle_error - this.last_angle_error)) / dt;
+        let torque = 1 * angle_error + (2 * (angle_error - this.lastError.angle)) / dt;
         
         let T1 = vertical_thrust/(2 * Math.cos(this.drone.angle)) + torque/2;
         let T2 = vertical_thrust/(2 * Math.cos(this.drone.angle)) - torque/2;
         let thrustArray = [T1, T2];
 
+        
         this.drone.update(dt, thrustArray);
 
-        this.last_angle_error = angle_error;
-        this.last_error = error;
-        this.last_dx = dx;
 
-        console.log("Left Thrust: " + T1.toFixed(4) + "\nRight Thrust: " + T2.toFixed(4) + "\nAngle Error: " + (angle_error * (180/Math.PI)).toFixed(4) + "\nTorque: " + torque.toFixed(4) + "\nCurrent Angle: " + (this.drone.angle * (180/Math.PI)).toFixed(4) + "\nDesired Angle: " + (this.desiredAngle * (180/Math.PI)).toFixed(4))
+        //Save Variables
+        this.lastError = {
+                    x: error.x,
+                    y: error.y,
+                    angle: angle_error
+                }
+
+        console.log(
+            "-- Vertical (Y) --\n" +
+            "y_desired: " + desired.y.toFixed(3) + " m\n" +
+            "y_current: " + this.drone.y.toFixed(3) + " m\n" +
+            "y_error:   " + error.y.toFixed(3) + " m\n" +
+            "v_thrust:  " + vertical_thrust.toFixed(3) + " N\n\n" +
+
+            "-- Horizontal (X) --\n" +
+            "x_desired: " + desired.x.toFixed(3) + " m\n" +
+            "x_current: " + this.drone.x.toFixed(3) + " m\n" +
+            "x_error:   " + error.x.toFixed(3) + " m\n" +
+            "des_angle: " + (this.desired_angle * 180 / Math.PI).toFixed(2) + " deg\n" +
+            "current_angle: " + (this.drone.angle * 180 / Math.PI).toFixed(2) + " deg\n" +
+            "angle_error: " + (angle_error * 180 / Math.PI).toFixed(2) + " deg\n\n" +
+
+            "-- Repulsion --\n" +
+            //"dist: " + dist.toFixed(3) + "\n" +
+            "x_repulsion: " + repulsion.x.toFixed(3) + "\n" +
+            "y_repulsion: " + repulsion.y.toFixed(3) 
+        );
     }
 
     simComplete() {

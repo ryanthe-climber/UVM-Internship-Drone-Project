@@ -5,6 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Drone Simulation</title>
     <style>
+        #gameContent {
+            font-family: Arial, sans-serif;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow-y: auto;
+            z-index: 1000;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .stageDiv {
+            pointer-events: all; /* re-enable clicks on actual UI elements */
+            max-width: 600px;
+            margin: 20px 0;
+            padding: 20px;
+            padding-bottom: 60px; /* breathing room at the bottom */
+        }
+
         body, html {
             margin: 0;
             padding: 0;
@@ -303,7 +326,7 @@
 
 
 
-        /*REMOVE LATER*/
+        /*REMOVE LATER
         #gameContent {
             font-family: Arial, sans-serif;
             /*margin: 20px;
@@ -312,16 +335,16 @@
             background-color: #f9f9f9;
             max-width: 600px;
             height: 100%;
-            width: 100%;*/
+            width: 100%;
             position: absolute;
             top: 0px;
             left: 0px;
             z-index: 1000;
-        }
+        }*/
 
-        div :not(#gameContent, .batteryOutline) {
+        /*div :not(#gameContent, .batteryOutline) {
             position: relative;
-        }
+        }*/
 
         button {
             cursor: pointer;
@@ -339,11 +362,11 @@
             opacity: 85%;
         }
 
-        .stageDiv {
+        /*.stageDiv {
             top: 0px;
             left: 0px;
             max-width: 600px;
-        }
+        }*/
 
         .explainationDiv {
             background-color: #f9f9f9;
@@ -428,12 +451,10 @@
         <a href="#" id="stage2Link">Stage 2 - Hover Thrust</a>
         <a href="#" id="stage3Link">Stage 3 - Altitude Control</a>
         <a href="#" id="stage4Link">Stage 4 - Battery Life</a>
-        <a href="#" id="stage5Link">Stage 5 - Modeling Mountains</a>
-        <a href="#" id="stage6Link">Stage 6 - Landing</a>
-        <a href="#" id="stage7Link">Stage 7 - Tilt/Movement Control</a>
-        <a href="#" id="stage8Link">Stage 8 - Adjusting for Wind</a>
-        <a href="#" id="stage9Link">Stage 9 - Obstacle Avoidance</a>
-        <a href="#" id="stage10Link">Stage 10 - not sure yet</a>
+        <a href="#" id="stage5Link">Stage 5 - Landing</a>
+        <a href="#" id="stage6Link">Stage 6 - Tilt/Movement Control</a>
+        <a href="#" id="stage7Link">Stage 7 - Vertical + Horizontal Control</a>
+        <a href="#" id="stage8Link">Stage 8 - Obstacle Avoidance</a>
         <a href="#" id="stageTestLink">TEST STAGE</a>
         <!-- Add more stages as needed -->
     </div>
@@ -527,7 +548,6 @@
     <script src="Stage6.js"></script>
     <script src="Stage7.js"></script>
     <script src="Stage8.js"></script>
-    <script src="Stage9.js"></script>
     <script src="Game.js"></script>
     <script src="StageTest.js"></script>
     <script>
