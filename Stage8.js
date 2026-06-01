@@ -54,69 +54,73 @@ class Stage8 {
         this.currentPhaseDiv = this.game.createPhaseDom2(this,
             this.stagediv,
             [
-                /*Teaching: what is obstacle avoidance*/
-                [
-                    this.game.createPhaseTeaching,
-                    this.obstacleIntroTeachText(),
-                    () => true, null, null
-                ],
- 
-                /*Teaching: distance to an obstacle*/
-                [
-                    this.game.createPhaseTeaching,
-                    this.distanceTeachText(),
-                    () => true, null, null
-                ],
- 
+                /*Physics Teaching Step*/
+                [this.game.createPhaseTeaching, this.obstaclePhysicsText(), () => true, null, null],
+
+                /*Math Teaching Step*/
+                [this.game.createPhaseTeaching, this.obstacleDistanceMathText(), () => true, null, null],
+
+                /*Code Bridge Teaching Step*/
+                [this.game.createPhaseTeaching, this.obstacleDistanceCodeBridgeText(), () => true, null, null],
+
                 /*Distance Input*/
                 [
                     this.game.input,
                     ["dist = ", "Enter equation for distance to an obstacle", "Submit"],
                     this.validateDistance.bind(this),
                     this.game.hint,
-                    "Hint: Use Math.hypot(dx, dy) to find the straight-line distance between two points, then subtract the obstacle's radius so the distance is measured from the obstacle's surface, not its centre."
+                    "Hint: Use Math.hypot(dx, dy) to find the straight-line distance between two points, then subtract the obstacle's radius so the distance is measured from the obstacle's surface, not its center."
                 ]
             ]);
     }
- 
-    obstacleIntroTeachText() {
-        return `<p>In Stage 8, the drone could follow your cursor, but it had no idea that obstacles exist. If you moved the cursor behind a red ball, the drone would fly straight into it.</p>
- 
-        <p>In this stage, we'll give the drone a sense of <b>self-preservation</b>. The idea is called a <b>repulsion field</b>: each obstacle pushes the drone away from itself, similar to how two magnets with matching poles repel each other.</p>
- 
-        <p>The closer the drone gets to an obstacle, the <b>stronger</b> the push. Far enough away, the obstacle has <b>no effect at all</b>. We blend this repulsion force directly into the same error-based control system from Stage 8.</p>
- 
-        <p>There are three things to figure out for each obstacle:</p>
-        <ol>
-            <li>How far away is the obstacle? (<b>distance</b>)</li>
-            <li>How hard should it push? (<b>repulsion strength</b>)</li>
-            <li>In which direction? (<b>repulsion vector</b>)</li>
-        </ol>`;
+
+    obstaclePhysicsText() {
+        return `
+            <p>In Stage 7, the drone could follow your cursor — but it had no awareness of obstacles. If you moved the cursor behind a red ball, the drone would fly straight into it.</p>
+            <p>In this stage we give the drone a sense of <strong>self-preservation</strong> using a <strong>repulsion field</strong>. Each obstacle pushes the drone away from itself, like two magnets with matching poles. The closer the drone gets, the stronger the push. Far enough away, the obstacle has no effect at all.</p>
+            <p>There are three things to figure out for each obstacle:</p>
+            <ol>
+                <li>How far away is it? (<strong>distance</strong>)</li>
+                <li>How hard should it push? (<strong>repulsion strength</strong>)</li>
+                <li>In which direction? (<strong>repulsion vector</strong>)</li>
+            </ol>
+        `;
     }
- 
-    distanceTeachText() {
-        return `<p>First, we need the <b>distance</b> from the drone to each obstacle. We already know the drone's position <b>(drone_x, drone_y)</b> and the obstacle's position <b>(obs_x, obs_y)</b>.</p>
- 
-        <p>The straight-line distance between two points uses the Pythagorean theorem:</p>
-        <pre>dist = sqrt(dx² + dy²)</pre>
-        <p>where <b>dx = drone_x − obs_x</b> and <b>dy = drone_y − obs_y</b>.</p>
- 
-        <p>In JavaScript, <b>Math.hypot(dx, dy)</b> does exactly this calculation for you.</p>
- 
-        <p>However, obstacles have a <b>radius</b>, so we measure distance from the <i>surface</i> of the obstacle, not its centre. That means we subtract the obstacle radius from the result:</p>
-        <pre>dist = Math.hypot(dx, dy) - obstacle_radius</pre>
- 
-        <p>Enter the equation for <b>dist</b> using the variables <b>dx</b>, <b>dy</b>, and <b>obstacle_radius</b>.</p>`;
+
+    obstacleDistanceMathText() {
+        return `
+            <p>To know how hard to push, we first need to know how far away the obstacle is. We have the drone's position <strong>(drone_x, drone_y)</strong> and the obstacle's position <strong>(obs_x, obs_y)</strong>, so we compute:</p>
+            <pre>dx = drone_x - obs_x
+dy = drone_y - obs_y</pre>
+            <p>The straight-line distance between the two points comes from the Pythagorean theorem:</p>
+            <pre>dist = sqrt(dx * dx + dy * dy)</pre>
+            <p>But obstacles have a <strong>radius</strong>, so what matters is how close the drone is to the <em>surface</em>, not the center. We subtract the obstacle radius to get that surface distance:</p>
+            <pre>dist = sqrt(dx * dx + dy * dy) - obstacle_radius</pre>
+        `;
+    }
+
+    obstacleDistanceCodeBridgeText() {
+        return `
+            <h3>Turning Math into Code</h3>
+            <p>JavaScript has a built-in function <code>Math.hypot(dx, dy)</code> that computes <code>sqrt(dx * dx + dy * dy)</code> for you. You have three variables available:</p>
+            <ul>
+                <li><code>dx</code>: horizontal gap between drone and obstacle center</li>
+                <li><code>dy</code>: vertical gap between drone and obstacle center</li>
+                <li><code>obstacle_radius</code>: the radius of the obstacle</li>
+            </ul>
+            <p>Write the right hand side of the distance equation using those variables.</p>
+        `;
     }
  
     validateDistance() {
         const code = this.positionUpdateCode;
- 
-        const hasHypot = /Math\.hypot|sqrt|hypot/.test(code);
-        const hasDx    = /\bdx\b/.test(code);
-        const hasDy    = /\bdy\b/.test(code);
-        const hasRadius = /\bobstacle_radius\b/.test(code);
- 
+        const normalized = code.replace(/(?<!Math\.)hypot/g, 'Math.hypot');
+
+        const hasHypot  = /Math\.hypot|sqrt/.test(normalized);
+        const hasDx     = /\bdx\b/.test(normalized);
+        const hasDy     = /\bdy\b/.test(normalized);
+        const hasRadius = /\bobstacle_radius\b/.test(normalized);
+
         if (!hasDx || !hasDy) {
             alert("Your equation must use the variables 'dx' and 'dy'. Please try again.");
             return false;
@@ -129,11 +133,9 @@ class Stage8 {
             alert("Don't forget to subtract 'obstacle_radius' so the distance is measured from the obstacle's surface. Please try again.");
             return false;
         }
- 
+
         try {
-            const normalized = code.replace(/\bhypot\b/g, 'Math.hypot');
             const fn = new Function('dx', 'dy', 'obstacle_radius', 'return (' + normalized + ');');
-            // drone at (3,4) from obstacle centre, radius 0.5 → dist = 5 - 0.5 = 4.5
             const result = fn(3, 4, 0.5);
             if (Math.abs(result - 4.5) > 0.05) {
                 alert("Incorrect. Check your equation: dist = Math.hypot(dx, dy) - obstacle_radius. Please try again.");
@@ -141,6 +143,7 @@ class Stage8 {
             }
         } catch(e) {
             alert("Please enter a valid equation.");
+            console.error(e);
             return false;
         }
         return true;
@@ -152,13 +155,15 @@ class Stage8 {
         this.currentPhaseDiv = this.game.createPhaseDom2(this,
             this.stagediv,
             [
-                /*Teaching: repulsion strength formula*/
-                [
-                    this.game.createPhaseTeaching,
-                    this.repulsionStrengthTeachText(),
-                    () => true, null, null
-                ],
- 
+                /*Physics Teaching Step*/
+                [this.game.createPhaseTeaching, this.repulsionPhysicsText(), () => true, null, null],
+
+                /*Math Teaching Step*/
+                [this.game.createPhaseTeaching, this.repulsionMathText(), () => true, null, null],
+
+                /*Code Bridge Teaching Step*/
+                [this.game.createPhaseTeaching, this.repulsionCodeBridgeText(), () => true, null, null],
+
                 /*Repulsion Strength Input*/
                 [
                     this.game.input,
@@ -169,24 +174,40 @@ class Stage8 {
                 ]
             ]);
     }
- 
-    repulsionStrengthTeachText() {
-        return `<p>Now that we know the distance, we need to compute the <b>repulsion strength</b> — how hard the obstacle pushes the drone away.</p>
- 
-        <p>We want a force that:</p>
-        <ul>
-            <li>Gets <b>very large</b> as the drone approaches the obstacle surface (dist → 0)</li>
-            <li>Fades to <b>exactly zero</b> at a certain safe distance called the <b>repulsion radius</b></li>
-            <li>Has <b>no effect</b> beyond that safe distance</li>
-        </ul>
- 
-        <p>A formula that does all three of these things is:</p>
-        <pre>strength = (1 / dist) - (1 / (obstacle_radius + repulsion_radius))</pre>
- 
-        <p>When <b>dist</b> is large, the first term is small and eventually the whole expression goes negative. We clamp it at zero so obstacles only ever <b>push</b>, never pull:</p>
-        <pre>if (strength &lt; 0) { strength = 0; }</pre>
- 
-        <p>Enter the equation for <b>strength</b> using the variables <b>dist</b>, <b>obstacle_radius</b>, and <b>repulsion_radius</b>. The clamping is handled for you after you submit.</p>`;
+
+    repulsionPhysicsText() {
+        return `
+            <p>Now that we know the distance, we need to decide how hard the obstacle should push the drone away. We want a force that behaves like a physical repulsion:</p>
+            <ul>
+                <li>Gets <strong>very large</strong> as the drone gets close to the obstacle surface</li>
+                <li>Fades to <strong>exactly zero</strong> at a safe distance called the <strong>repulsion radius</strong></li>
+                <li>Has <strong>no effect at all</strong> beyond that distance</li>
+            </ul>
+            <p>This is the same idea as a magnetic repulsion field — strong up close, invisible from far away.</p>
+        `;
+    }
+
+    repulsionMathText() {
+        return `
+            <p>A formula that produces exactly this behaviour is:</p>
+            <pre>strength = (1 / dist) - (1 / (obstacle_radius + repulsion_radius))</pre>
+            <p>When <strong>dist</strong> is small, <code>1/dist</code> is large, so strength is large. As dist grows toward <code>obstacle_radius + repulsion_radius</code>, the two terms become equal and strength reaches zero. Beyond that the formula goes negative, so we clamp it:</p>
+            <pre>if (strength &lt; 0) { strength = 0; }</pre>
+            <p>This ensures obstacles only ever <strong>push</strong>, never pull.</p>
+        `;
+    }
+
+    repulsionCodeBridgeText() {
+        return `
+            <h3>Turning Math into Code</h3>
+            <p>You have three variables available:</p>
+            <ul>
+                <li><code>dist</code>: the surface distance you computed in the last phase</li>
+                <li><code>obstacle_radius</code>: the radius of the obstacle</li>
+                <li><code>repulsion_radius</code>: the safe distance beyond which there is no push</li>
+            </ul>
+            <p>Write the right hand side of the strength equation. The clamping to zero is handled automatically after you submit.</p>
+        `;
     }
  
     validateRepulsionStrength() {
@@ -232,13 +253,15 @@ class Stage8 {
         this.currentPhaseDiv = this.game.createPhaseDom2(this,
             this.stagediv,
             [
-                /*Teaching: repulsion direction + combining with cursor error*/
-                [
-                    this.game.createPhaseTeaching,
-                    this.repulsionDirectionTeachText(),
-                    () => true, null, null
-                ],
- 
+                /*Physics Teaching Step*/
+                [this.game.createPhaseTeaching, this.repulsionDirectionPhysicsText(), () => true, null, null],
+
+                /*Math Teaching Step*/
+                [this.game.createPhaseTeaching, this.repulsionDirectionMathText(), () => true, null, null],
+
+                /*Code Bridge Teaching Step*/
+                [this.game.createPhaseTeaching, this.repulsionDirectionCodeBridgeText(), () => true, null, null],
+
                 /*Combined X Error Input*/
                 [
                     this.game.input,
@@ -247,7 +270,7 @@ class Stage8 {
                     this.game.hint,
                     "Hint: Add the cursor x error and the x component of the repulsion together: cursor_x_error + repulsion_x"
                 ],
- 
+
                 /*Combined Y Error Input*/
                 [
                     this.game.input,
@@ -258,23 +281,40 @@ class Stage8 {
                 ]
             ]);
     }
- 
-    repulsionDirectionTeachText() {
-        return `<p>We know how <i>strongly</i> to push. Now we need to know in which <b>direction</b>.</p>
- 
-        <p>The repulsion should point <b>directly away from the obstacle</b>. The vector pointing from the obstacle to the drone is simply <b>(dx, dy)</b> — the same values we used to compute distance. Multiplying by the strength scales that direction vector:</p>
-        <pre>repulsion_x = dx * strength
+
+    repulsionDirectionPhysicsText() {
+        return `
+            <p>We know <em>how hard</em> to push. Now we need to know <em>which direction</em> to push.</p>
+            <p>The repulsion should point <strong>directly away from the obstacle</strong> — if the obstacle is to the left, the drone should be pushed right. The natural vector pointing away from the obstacle is the same <strong>(dx, dy)</strong> we already computed for the distance calculation.</p>
+            <p>Once we have direction and strength for each obstacle, we combine all the pushes together and blend them into the cursor error from Stage 7. The rest of the control system stays exactly the same — it just receives a blended error instead of the raw cursor error.</p>
+        `;
+    }
+
+    repulsionDirectionMathText() {
+        return `
+            <p>To get the repulsion vector for one obstacle, we scale the direction by the strength:</p>
+            <pre>repulsion_x = dx * strength
 repulsion_y = dy * strength</pre>
- 
-        <p>We do this for every obstacle and <b>add all the repulsion vectors together</b>. If two obstacles are pushing in different directions, their contributions partially cancel — the drone threads between them naturally.</p>
- 
-        <p>The final step is to <b>blend repulsion into the cursor error</b> from Stage 8. Instead of feeding raw cursor error into the controllers, we add the repulsion on top:</p>
-        <pre>combined_x_error = cursor_x_error + repulsion_x
+            <p>We do this for every obstacle and add all contributions together. If two obstacles push in different directions, they partially cancel and the drone threads between them naturally.</p>
+            <p>Finally, we add the total repulsion to the cursor error:</p>
+            <pre>combined_x_error = cursor_x_error + repulsion_x
 combined_y_error = cursor_y_error + repulsion_y</pre>
- 
-        <p>The rest of the control system (vertical thrust, desired angle, torque, motor split) is <b>unchanged</b> from Stage 8 — it just receives this blended error instead of the raw cursor error.</p>
- 
-        <p>Enter each combined error equation below using the variables <b>cursor_x_error</b> and <b>repulsion_x</b> (or <b>cursor_y_error</b> and <b>repulsion_y</b>).</p>`;
+            <p>This blended error is then fed into the same three PD controllers from Stage 7 — nothing else needs to change.</p>
+        `;
+    }
+
+    repulsionDirectionCodeBridgeText() {
+        return `
+            <h3>Turning Math into Code</h3>
+            <p>You have these variables available:</p>
+            <ul>
+                <li><code>cursor_x_error</code>: the horizontal gap between cursor and drone</li>
+                <li><code>cursor_y_error</code>: the vertical gap between cursor and drone</li>
+                <li><code>repulsion_x</code>: the total horizontal push from all obstacles</li>
+                <li><code>repulsion_y</code>: the total vertical push from all obstacles</li>
+            </ul>
+            <p>Write the combined error equations for x and y separately.</p>
+        `;
     }
  
     validateCombinedX() {
@@ -333,13 +373,12 @@ combined_y_error = cursor_y_error + repulsion_y</pre>
         this.currentPhaseDiv = this.game.createPhaseDom2(this,
             this.stagediv,
             [
-                /*Teaching: sim intro*/
-                [
-                    this.game.createPhaseTeaching,
-                    this.simIntroTeachText(),
-                    () => true, null, null
-                ],
- 
+                /*Physics Teaching Step*/
+                [this.game.createPhaseTeaching, this.simIntroPhysicsText(), () => true, null, null],
+
+                /*Math Teaching Step*/
+                [this.game.createPhaseTeaching, this.simIntroMathText(), () => true, null, null],
+
                 /*Simulation Step*/
                 [
                     this.game.simulateDrone,
@@ -354,68 +393,28 @@ combined_y_error = cursor_y_error + repulsion_y</pre>
                 ]
             ]);
     }
- 
-    simIntroTeachText() {
-        return `<p>The full system is now in place:</p>
-        <ol>
-            <li>For each obstacle, compute <b>distance</b> from the drone to its surface.</li>
-            <li>Use the potential field formula to get a <b>repulsion strength</b> (zero beyond the safe radius).</li>
-            <li>Scale the direction vector <b>(dx, dy)</b> by the strength to get the repulsion contribution.</li>
-            <li>Sum all obstacle repulsions and <b>add to the cursor error</b>.</li>
-            <li>Feed the combined error into the same <b>three PD controllers</b> from Stage 8.</li>
-        </ol>
-        <p>Move your cursor around the screen. Try guiding the drone close to the red obstacles and watch it automatically steer away.</p>`;
+
+    simIntroPhysicsText() {
+        return `
+            <p>All the pieces are now in place. The drone will follow your cursor just like in Stage 7, but now it also senses the red obstacles and steers away from them automatically.</p>
+            <p>Notice that you don't need to change anything about the motors, thrust, or angle controllers — the repulsion field works by simply modifying the <strong>error signal</strong> that gets fed in. The controllers have no idea anything changed; they just respond to whatever error they receive.</p>
+        `;
     }
- 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    /*
-    managePhases() {
-        switch(this.phase) {
-            case 0: game.stageExplainationDOM(this, this.stagediv, 'Welcome to Stage 8! Here you will learn how to make the drone avoid obstacles', "Start");
-                    break;
-            case 1: this.phase1();
-                    break;
-
-            default:this.game.endStage("Stage 8 Completed", "Stage 10 - FILL IN HERE", Stage10, this);
-                    this.stageEnded = true;
-                    break;
-        }
+    simIntroMathText() {
+        return `
+            <p>Here is the full pipeline the drone runs every frame:</p>
+            <ol>
+                <li>For each obstacle, compute <strong>dist</strong> from the drone to its surface.</li>
+                <li>Use the potential field formula to get a <strong>repulsion strength</strong> (zero beyond the safe radius).</li>
+                <li>Scale the direction vector <strong>(dx, dy)</strong> by the strength to get each obstacle's repulsion contribution.</li>
+                <li>Sum all obstacle repulsions and <strong>add to the cursor error</strong> to get combined_x_error and combined_y_error.</li>
+                <li>Feed the combined error into the same <strong>three PD controllers</strong> from Stage 7 — vertical thrust, desired angle, and torque.</li>
+            </ol>
+            <p>Move your cursor around and try guiding the drone close to the red obstacles. Watch it steer away on its own.</p>
+        `;
     }
-    
 
-    phase1() {
-        this.currentPhaseDiv = this.game.createPhaseDom2(this,
-                    this.stagediv,
-                    [
-                        //Simulation Step
-                                    [
-                                        this.game.simulateDrone,
-                                        [
-                                            this.initSim.bind(this), 
-                                            this.stepSim.bind(this), 
-                                            this.simComplete.bind(this), 
-                                        ],
-                                        this.objectiveReached.bind(this),
-                                        null,
-                                        null
-                                    ]
-                    ]);
-    }
-                    */
 
     nextPhase() {
         this.phase++;

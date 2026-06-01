@@ -616,44 +616,6 @@ T2 = vertical_thrust / (2 · cos(angle)) − torque / 2</pre>
             angle: angle_error
         }
 
-
-
-
-
-
-        /*
-        this.desired_height = (this.game.canvas.height / this.game.meter) - (this.mouseY / this.game.meter);
-
-        let dx = (this.mouseX / this.game.meter) - this.drone.x;
-        let dx_dot = (dx - this.last_dx) / dt;
-
-        // Desired horizontal acceleration
-        let ax_desired = 1 * dx + 2 * dx_dot;
-
-        // Convert acceleration to tilt angle
-        this.desiredAngle = -1 * Math.atan(ax_desired / this.drone.gravity);
-
-        let error = this.desired_height - this.drone.y;
-
-        let hover_thrust = -1 * this.drone.mass * this.drone.gravity;
-
-        let vertical_thrust = 1 * error + 2 * ((error - this.last_error) / dt) + hover_thrust;               
-
-        let angle_error = this.desiredAngle - this.drone.angle;
-
-        let torque = 1 * angle_error + (2 * (angle_error - this.last_angle_error)) / dt;
-        
-        let T1 = vertical_thrust/(2 * Math.cos(this.drone.angle)) + torque/2;
-        let T2 = vertical_thrust/(2 * Math.cos(this.drone.angle)) - torque/2;
-        let thrustArray = [T1, T2];
-
-        this.drone.update(dt, thrustArray);
-
-        this.last_angle_error = angle_error;
-        this.last_error = error;
-        this.last_dx = dx;
-        */
-
         console.log("Left Thrust: " + T1.toFixed(4) + "\nRight Thrust: " + T2.toFixed(4) + "\nAngle Error: " + (angle_error * (180/Math.PI)).toFixed(4) + "\nTorque: " + torque.toFixed(4) + "\nCurrent Angle: " + (this.drone.angle * (180/Math.PI)).toFixed(4) + "\nDesired Angle: " + (this.desiredAngle * (180/Math.PI)).toFixed(4))
     }
 

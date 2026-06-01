@@ -233,5 +233,5 @@ class Stage5 {
         this.managePhases();
     }
 }
-// Assign Stage6 to the global window object
-window.Stage6 = Stage6;
+// Assign Stage5 to the global window object
+window.Stage5 = Stage5;
